@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎮 Faul or Not
 
-## Getting Started
+A modern, multiplayer, browser-based Turkish party game inspired by Taboo.
 
-First, run the development server:
+## Tech Stack
+
+- **Next.js 15** (App Router, Server Components)
+- **React 19** with Zustand state management
+- **PartyKit** on Cloudflare for real-time game rooms (authoritative server)
+- **Supabase** PostgreSQL for word deck & history
+- **next-intl** for Turkish-first i18n
+- **Framer Motion** for animations
+- **CSS Modules** + CSS custom properties for styling
+
+## Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Copy env template and fill in values
+cp .env.example .env.local
+
+# Run Next.js dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# In a separate terminal, run PartyKit dev server
+npm run party:dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to play locally.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+If Supabase credentials are not configured, the app falls back to an in-memory Turkish word deck.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```
+faulornot/
+├── party/              # PartyKit authoritative game server
+├── src/
+│   ├── app/[locale]/   # Next.js App Router pages (i18n-aware)
+│   ├── components/     # Atomic + compound React components
+│   ├── features/       # Feature modules (game-engine, lobby)
+│   ├── lib/            # Supabase, i18n, utils
+│   ├── messages/       # Translation JSON (tr, en)
+│   ├── stores/         # Zustand stores
+│   └── types/          # Shared TypeScript types
+└── supabase/           # SQL migrations + seed
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Game Modes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Mode | Description |
+|------|-------------|
+| **Normal** | Classic Taboo. Describe, guess, switch turns, first to target wins |
+| **Ani Ölüm** | Sudden Death. Correct answers add time, fouls subtract it |
+| **Bomba Kimde** | Hot-potato bomb that resets on correct answer |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+- **Vercel** — Next.js
+- **Cloudflare (PartyKit)** — real-time server
+- **Supabase** — database & future auth
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See the full implementation plan for deployment details.
