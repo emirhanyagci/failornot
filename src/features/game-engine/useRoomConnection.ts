@@ -19,6 +19,11 @@ interface UseRoomConnectionOptions {
   autoJoin?: boolean;
 }
 
+export interface RoundEventFlash {
+  id: number;
+  data: RoundEvent;
+}
+
 export interface RoomConnection {
   connected: boolean;
   lobby: LobbyState | null;
@@ -27,6 +32,7 @@ export interface RoomConnection {
   revealedWord: WordCard | null;
   lastTimer: number | null;
   bomb: { holder: Team; remaining: number } | null;
+  roundEventFlash: RoundEventFlash | null;
   send: (msg: ClientMessage) => void;
 }
 
@@ -38,7 +44,10 @@ export function useRoomConnection({ roomId, autoJoin = true }: UseRoomConnection
   const [revealedWord, setRevealedWord] = useState<WordCard | null>(null);
   const [lastTimer, setLastTimer] = useState<number | null>(null);
   const [bomb, setBomb] = useState<{ holder: Team; remaining: number } | null>(null);
+  const [roundEventFlash, setRoundEventFlash] = useState<RoundEventFlash | null>(null);
   const socketRef = useRef<PartySocket | null>(null);
+  const flashCounterRef = useRef(0);
+  const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const username = usePlayerStore((s) => s.username);
   const avatarId = usePlayerStore((s) => s.avatarId);
@@ -101,9 +110,13 @@ export function useRoomConnection({ roomId, autoJoin = true }: UseRoomConnection
             g ? { ...g, bombHolder: msg.payload.holder, bombRemaining: msg.payload.remaining } : g,
           );
           break;
-        case "round_event":
-          handleRoundEventToast(msg.payload);
+        case "round_event": {
+          flashCounterRef.current += 1;
+          setRoundEventFlash({ id: flashCounterRef.current, data: msg.payload });
+          if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+          flashTimeoutRef.current = setTimeout(() => setRoundEventFlash(null), 1000);
           break;
+        }
         case "turn_end":
           // optional toast
           break;
@@ -144,6 +157,10 @@ export function useRoomConnection({ roomId, autoJoin = true }: UseRoomConnection
       socket.removeEventListener("close", handleClose);
       socket.removeEventListener("error", handleError);
       socket.close();
+      if (flashTimeoutRef.current) {
+        clearTimeout(flashTimeoutRef.current);
+        flashTimeoutRef.current = null;
+      }
     };
   }, [roomId, autoJoin, username, avatarId, ensureSecret]);
 
@@ -153,11 +170,15 @@ export function useRoomConnection({ roomId, autoJoin = true }: UseRoomConnection
     s.send(JSON.stringify(msg));
   }, []);
 
-  return { connected, lobby, game, meId, revealedWord, lastTimer, bomb, send };
-}
-
-function handleRoundEventToast(evt: RoundEvent) {
-  if (evt.type === "correct") toast.success(`Doğru! ✓ ${evt.word}`);
-  if (evt.type === "foul") toast.error(`Faul! ✗ ${evt.word}`);
-  if (evt.type === "pass") toast(`Pas → ${evt.word}`);
+  return {
+    connected,
+    lobby,
+    game,
+    meId,
+    revealedWord,
+    lastTimer,
+    bomb,
+    roundEventFlash,
+    send,
+  };
 }

@@ -27,9 +27,3 @@ export function cls(...parts: Array<string | false | null | undefined>): string 
 export const AVATAR_IDS: string[] = Array.from({ length: 20 }, (_, i) =>
   `avatar-${(i + 1).toString().padStart(2, "0")}`,
 );
-
-export function avatarEmoji(avatarId: string): string {
-  const pool = ["🦊", "🐻", "🐼", "🦁", "🐯", "🐸", "🐵", "🦉", "🐺", "🐰", "🦝", "🦄", "🐲", "🐙", "🦋", "🐢", "🦩", "🐧", "🦖", "🐳"];
-  const n = parseInt(avatarId.replace(/\D/g, ""), 10) || 1;
-  return pool[(n - 1) % pool.length];
-}

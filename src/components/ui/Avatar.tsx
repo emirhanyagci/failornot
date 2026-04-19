@@ -1,7 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
+import { createAvatar } from "@dicebear/core";
+import { adventurer } from "@dicebear/collection";
 import styles from "./Avatar.module.css";
-import { avatarEmoji, cls } from "@/lib/utils";
+import { cls } from "@/lib/utils";
 
 interface AvatarProps {
   avatarId: string;
@@ -11,6 +14,16 @@ interface AvatarProps {
 }
 
 export function Avatar({ avatarId, size = "md", team, ring }: AvatarProps) {
+  const dataUri = useMemo(
+    () =>
+      createAvatar(adventurer, {
+        seed: avatarId,
+        radius: 50,
+        backgroundColor: ["b6e3f4", "c0aede", "d1d4f9", "ffd5dc", "ffdfbf"],
+      }).toDataUri(),
+    [avatarId],
+  );
+
   return (
     <div
       className={cls(
@@ -22,7 +35,7 @@ export function Avatar({ avatarId, size = "md", team, ring }: AvatarProps) {
       )}
       aria-label={`avatar-${avatarId}`}
     >
-      <span className={styles.face}>{avatarEmoji(avatarId)}</span>
+      <img src={dataUri} alt="" className={styles.image} draggable={false} />
     </div>
   );
 }

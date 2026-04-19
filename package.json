@@ -13,6 +13,8 @@
     "words:import": "tsx scripts/import-words.mjs"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.4.2",
+    "@dicebear/core": "^9.4.2",
     "@supabase/supabase-js": "^2.45.4",
     "framer-motion": "^12.0.0",
     "lucide-react": "^0.460.0",

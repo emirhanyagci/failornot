@@ -6,11 +6,11 @@ import { useTranslations } from "next-intl";
 import { ActionBar } from "@/components/game/ActionBar";
 import { GameOverModal } from "@/components/game/GameOverModal";
 import { GameTimer } from "@/components/game/GameTimer";
+import { RoundEventFlash } from "@/components/game/RoundEventFlash";
 import { ScoreBoard } from "@/components/game/ScoreBoard";
 import { TurnIndicator } from "@/components/game/TurnIndicator";
 import { WordCard } from "@/components/game/WordCard";
 import { Button } from "@/components/ui/Button";
-import { useRouter } from "@/lib/i18n/routing";
 import type { RoomConnection } from "@/features/game-engine/useRoomConnection";
 import styles from "./GameView.module.css";
 
@@ -21,8 +21,7 @@ interface GameViewProps {
 
 export function GameView({ room }: GameViewProps) {
   const t = useTranslations("game");
-  const router = useRouter();
-  const { game, meId, revealedWord, bomb } = room;
+  const { game, meId, revealedWord, bomb, roundEventFlash } = room;
   if (!game) return null;
 
   const me = game.players.find((p) => p.id === meId);
@@ -80,6 +79,7 @@ export function GameView({ room }: GameViewProps) {
             emphasize={isDescriber}
           />
         </AnimatePresence>
+        <RoundEventFlash event={roundEventFlash} />
       </div>
 
       {turn && (
@@ -116,10 +116,7 @@ export function GameView({ room }: GameViewProps) {
         teams={game.teams}
         isHost={isHost}
         onPlayAgain={() => room.send({ type: "play_again" })}
-        onBackToLobby={() => {
-          room.send({ type: "return_to_lobby" });
-          router.push("/");
-        }}
+        onBackToLobby={() => room.send({ type: "return_to_lobby" })}
       />
     </motion.div>
   );
