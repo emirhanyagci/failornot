@@ -1,0 +1,120 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-display);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal),
+    opacity var(--transition-normal), background var(--transition-normal);
+  color: white;
+  user-select: none;
+  min-height: 48px;
+  padding: var(--space-md) var(--space-xl);
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.btn:disabled,
+.btn.loading {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.btn:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.sm {
+  min-height: 36px;
+  padding: var(--space-xs) var(--space-md);
+  font-size: 0.875rem;
+}
+
+.md {
+  min-height: 48px;
+}
+
+.lg {
+  min-height: 56px;
+  padding: var(--space-md) var(--space-2xl);
+  font-size: 1.125rem;
+}
+
+.primary {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-300),
+    var(--color-primary-500)
+  );
+  box-shadow: var(--shadow-glow-primary);
+}
+.primary:not(:disabled):hover {
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.6);
+}
+
+.accent {
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-300),
+    var(--color-accent-500)
+  );
+  box-shadow: var(--shadow-glow-accent);
+}
+.accent:not(:disabled):hover {
+  box-shadow: 0 0 30px rgba(255, 112, 67, 0.6);
+}
+
+.ghost {
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--surface-glass-border);
+  color: var(--text-primary);
+}
+.ghost:not(:disabled):hover {
+  background: var(--surface-card-hover);
+}
+
+.subtle {
+  background: transparent;
+  color: var(--text-secondary);
+  min-height: 40px;
+  padding: var(--space-sm) var(--space-md);
+}
+.subtle:not(:disabled):hover {
+  background: var(--surface-glass);
+  color: var(--text-primary);
+}
+
+.success {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+.danger {
+  background: linear-gradient(135deg, #ec4899, #db2777);
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
+}
+
+.warning {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1a1128;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

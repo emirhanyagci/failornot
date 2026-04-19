@@ -1,0 +1,31 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  text-align: center;
+}
+
+.describer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.describerText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.describerName {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.role {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}

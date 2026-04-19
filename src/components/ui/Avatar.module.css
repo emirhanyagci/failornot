@@ -1,0 +1,48 @@
+.avatar {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--surface-elevated), var(--surface-card));
+  border: 2px solid var(--surface-glass-border);
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform var(--transition-spring);
+}
+
+.face {
+  font-size: 60%;
+  line-height: 1;
+}
+
+.sm {
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+}
+
+.md {
+  width: 56px;
+  height: 56px;
+  font-size: 32px;
+}
+
+.lg {
+  width: 96px;
+  height: 96px;
+  font-size: 56px;
+}
+
+.teamA {
+  border-color: var(--team-a);
+  box-shadow: 0 0 12px var(--team-a-glow);
+}
+
+.teamB {
+  border-color: var(--team-b);
+  box-shadow: 0 0 12px var(--team-b-glow);
+}
+
+.ring {
+  box-shadow: 0 0 0 4px var(--color-primary-300), 0 0 20px rgba(168, 85, 247, 0.5);
+}
