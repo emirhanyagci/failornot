@@ -1,0 +1,122 @@
+{
+  "common": {
+    "back": "Geri",
+    "close": "Kapat",
+    "copy": "Kopyala",
+    "copied": "Kopyalandı!",
+    "loading": "Yükleniyor...",
+    "connecting": "Bağlanıyor...",
+    "cancel": "İptal",
+    "confirm": "Onayla",
+    "submit": "Gönder",
+    "seconds": "saniye",
+    "points": "puan"
+  },
+  "home": {
+    "title": "Faul or Not",
+    "subtitle": "Kelimeleri anlat, takımın bilsin. Ama yasak kelimeleri söyleme!",
+    "createLobby": "Lobi Oluştur",
+    "joinByCode": "Koda Katıl",
+    "lobbyList": "Lobi Listesi",
+    "suggestWord": "Kelime Öner",
+    "usernamePlaceholder": "Kullanıcı adın",
+    "usernameRequired": "Kullanıcı adı gerekli",
+    "usernameTooLong": "En fazla 16 karakter",
+    "avatarLabel": "Avatar",
+    "nextAvatar": "Sonraki avatar",
+    "prevAvatar": "Önceki avatar",
+    "version": "v0.1 • Türkçe"
+  },
+  "create": {
+    "title": "Lobi Ayarı",
+    "gameMode": "Oyun Modu",
+    "modes": {
+      "normal": "Normal",
+      "sudden_death": "Ani Ölüm",
+      "bomb": "Bomba Kimde"
+    },
+    "modeDesc": {
+      "normal": "Klasik Tabu: Süre dolunca sıra karşı takıma geçer.",
+      "sudden_death": "Doğru bil +5sn, faul -5sn. Süre bitene kadar devam!",
+      "bomb": "30 saniyede bil, bomba karşıya geçsin. Bilemezsen patlar!"
+    },
+    "category": "Kategori",
+    "categories": {
+      "genel": "Genel Kültür",
+      "karisik": "Karışık",
+      "oyun": "Oyun & Eğlence",
+      "spor": "Spor",
+      "bilim": "Bilim & Teknoloji",
+      "tarih": "Tarih"
+    },
+    "roundTime": "Tur Süresi",
+    "targetScore": "Hedef Skor",
+    "passLimit": "Pas Hakkı",
+    "lobbyType": "Lobi Tipi",
+    "private": "Özel",
+    "public": "Herkese Açık",
+    "createButton": "Lobiyi Oluştur"
+  },
+  "lobby": {
+    "codeLabel": "Lobi Kodu",
+    "teamA": "Takım A",
+    "teamB": "Takım B",
+    "emptySlot": "boş slot",
+    "host": "sahip",
+    "shuffle": "Karıştır",
+    "swap": "Takımları Değiştir",
+    "startGame": "Oyunu Başlat",
+    "minPlayers": "Her takımda en az 1 oyuncu olmalı",
+    "playerCount": "{count}/{max} Oyuncu",
+    "waitingForHost": "Lobi sahibi başlatmayı bekliyor...",
+    "settingsSummary": "{mode} • {categories} • {time}sn",
+    "leaveLobby": "Lobiden Çık"
+  },
+  "join": {
+    "title": "Koda Katıl",
+    "codePlaceholder": "Lobi Kodu",
+    "joinButton": "Katıl",
+    "invalidCode": "Geçersiz lobi kodu"
+  },
+  "browse": {
+    "title": "Lobi Listesi",
+    "empty": "Henüz herkese açık lobi yok.",
+    "note": "Not: Herkese açık lobiler yakında eklenecek. Şimdilik arkadaşından kod al."
+  },
+  "game": {
+    "turnOf": "{team} sırası",
+    "describer": "Anlatan: {name}",
+    "guessPrompt": "Tahmin et!",
+    "waitingPrompt": "Rakip anlatıyor...",
+    "opponentPrompt": "Faul gözle",
+    "correct": "Doğru",
+    "pass": "Pas",
+    "foul": "Faul",
+    "passRemaining": "Pas: {remaining}/{total}",
+    "callFoul": "FAUL!",
+    "bombHolder": "Bomba {team} takımında!",
+    "bombTime": "Bomba",
+    "lives": "Can",
+    "yourTurnToast": "Sıra sende! Anlat!",
+    "turnEnded": "Tur bitti"
+  },
+  "gameOver": {
+    "title": "Oyun Bitti!",
+    "winnerA": "Takım A Kazandı 🏆",
+    "winnerB": "Takım B Kazandı 🏆",
+    "draw": "Berabere!",
+    "score": "Skor",
+    "playAgain": "Tekrar Oyna",
+    "backToLobby": "Lobiye Dön"
+  },
+  "errors": {
+    "invalidCode": "Geçersiz lobi kodu",
+    "lobbyFull": "Lobi dolu",
+    "gameInProgress": "Oyun devam ediyor",
+    "connectionLost": "Bağlantı koptu. Yeniden bağlanılıyor...",
+    "reconnected": "Bağlantı yeniden kuruldu!",
+    "emptyUsername": "Kullanıcı adı gerekli",
+    "notHost": "Sadece lobi sahibi yapabilir",
+    "teamsUnbalanced": "Her takımda en az 1 oyuncu olmalı"
+  }
+}

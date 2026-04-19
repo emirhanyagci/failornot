@@ -1,0 +1,122 @@
+{
+  "common": {
+    "back": "Back",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "loading": "Loading...",
+    "connecting": "Connecting...",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "submit": "Submit",
+    "seconds": "seconds",
+    "points": "points"
+  },
+  "home": {
+    "title": "Faul or Not",
+    "subtitle": "Describe words for your team. But don't say the forbidden ones!",
+    "createLobby": "Create Lobby",
+    "joinByCode": "Join by Code",
+    "lobbyList": "Browse Lobbies",
+    "suggestWord": "Suggest a Word",
+    "usernamePlaceholder": "Your username",
+    "usernameRequired": "Username required",
+    "usernameTooLong": "16 chars max",
+    "avatarLabel": "Avatar",
+    "nextAvatar": "Next avatar",
+    "prevAvatar": "Previous avatar",
+    "version": "v0.1 • English"
+  },
+  "create": {
+    "title": "Lobby Setup",
+    "gameMode": "Game Mode",
+    "modes": {
+      "normal": "Normal",
+      "sudden_death": "Sudden Death",
+      "bomb": "Who Has the Bomb"
+    },
+    "modeDesc": {
+      "normal": "Classic Taboo. Timer ends → opposing team's turn.",
+      "sudden_death": "Correct +5s, foul −5s. Keep going until the timer dies!",
+      "bomb": "Guess in 30s, pass the bomb. Or it explodes!"
+    },
+    "category": "Category",
+    "categories": {
+      "genel": "General Knowledge",
+      "karisik": "Mixed",
+      "oyun": "Games & Fun",
+      "spor": "Sports",
+      "bilim": "Science & Tech",
+      "tarih": "History"
+    },
+    "roundTime": "Round Time",
+    "targetScore": "Target Score",
+    "passLimit": "Pass Limit",
+    "lobbyType": "Lobby Type",
+    "private": "Private",
+    "public": "Public",
+    "createButton": "Create Lobby"
+  },
+  "lobby": {
+    "codeLabel": "Lobby Code",
+    "teamA": "Team A",
+    "teamB": "Team B",
+    "emptySlot": "empty slot",
+    "host": "host",
+    "shuffle": "Shuffle",
+    "swap": "Swap Teams",
+    "startGame": "Start Game",
+    "minPlayers": "At least 1 player per team",
+    "playerCount": "{count}/{max} Players",
+    "waitingForHost": "Waiting for host to start...",
+    "settingsSummary": "{mode} • {categories} • {time}s",
+    "leaveLobby": "Leave Lobby"
+  },
+  "join": {
+    "title": "Join by Code",
+    "codePlaceholder": "Lobby Code",
+    "joinButton": "Join",
+    "invalidCode": "Invalid lobby code"
+  },
+  "browse": {
+    "title": "Browse Lobbies",
+    "empty": "No public lobbies yet.",
+    "note": "Note: Public lobbies coming soon. For now, ask a friend for a code."
+  },
+  "game": {
+    "turnOf": "{team}'s turn",
+    "describer": "Describer: {name}",
+    "guessPrompt": "Guess it!",
+    "waitingPrompt": "Opponent describing...",
+    "opponentPrompt": "Watch for fouls",
+    "correct": "Correct",
+    "pass": "Pass",
+    "foul": "Foul",
+    "passRemaining": "Pass: {remaining}/{total}",
+    "callFoul": "FOUL!",
+    "bombHolder": "{team} has the bomb!",
+    "bombTime": "Bomb",
+    "lives": "Lives",
+    "yourTurnToast": "Your turn! Describe!",
+    "turnEnded": "Turn ended"
+  },
+  "gameOver": {
+    "title": "Game Over!",
+    "winnerA": "Team A wins 🏆",
+    "winnerB": "Team B wins 🏆",
+    "draw": "Draw!",
+    "score": "Score",
+    "playAgain": "Play Again",
+    "backToLobby": "Back to Lobby"
+  },
+  "errors": {
+    "invalidCode": "Invalid lobby code",
+    "lobbyFull": "Lobby full",
+    "gameInProgress": "Game in progress",
+    "connectionLost": "Connection lost. Reconnecting...",
+    "reconnected": "Reconnected!",
+    "emptyUsername": "Username required",
+    "notHost": "Only the host can do this",
+    "teamsUnbalanced": "At least 1 player per team"
+  }
+}
