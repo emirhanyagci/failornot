@@ -6,19 +6,32 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "party:dev": "partykit dev",
+    "party:deploy": "partykit deploy",
+    "words:import": "tsx scripts/import-words.mjs"
   },
   "dependencies": {
-    "next": "16.2.4",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "@supabase/supabase-js": "^2.45.4",
+    "framer-motion": "^12.0.0",
+    "lucide-react": "^0.460.0",
+    "next": "^15.3.0",
+    "next-intl": "^4.0.0",
+    "partysocket": "^1.0.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sonner": "^1.7.0",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.4",
-    "typescript": "^5"
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.3.0",
+    "partykit": "^0.0.114",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
   }
 }
