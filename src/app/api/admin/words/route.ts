@@ -56,23 +56,50 @@ export async function POST(request: Request) {
       );
     }
 
+    // Aynı kelime + dil zaten varsa: skip et, var olan kaydı dön.
+    const { data: existing, error: existingError } = await admin
+      .from("words")
+      .select("id, word, language, category_id")
+      .eq("word", row.word)
+      .eq("language", row.language)
+      .maybeSingle();
+    if (existingError) {
+      return NextResponse.json(
+        { ok: false, error: existingError.message },
+        { status: 500 },
+      );
+    }
+    if (existing) {
+      return NextResponse.json(
+        { ok: false, error: "ALREADY_EXISTS", word: existing },
+        { status: 409 },
+      );
+    }
+
     const { data, error } = await admin
       .from("words")
-      .upsert(
-        {
-          category_id: categoryId,
-          word: row.word,
-          forbidden_words: row.forbidden_words,
-          difficulty: row.difficulty,
-          language: row.language,
-          is_active: true,
-        },
-        { onConflict: "word,language", ignoreDuplicates: false },
-      )
+      .insert({
+        category_id: categoryId,
+        word: row.word,
+        forbidden_words: row.forbidden_words,
+        difficulty: row.difficulty,
+        language: row.language,
+        is_active: true,
+      })
       .select("id, word, language, category_id")
       .single();
 
     if (error) {
+      // Race condition: araya başka bir istek girip eklemiş olabilir.
+      if (
+        typeof (error as { code?: string }).code === "string" &&
+        (error as { code: string }).code === "23505"
+      ) {
+        return NextResponse.json(
+          { ok: false, error: "ALREADY_EXISTS" },
+          { status: 409 },
+        );
+      }
       return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
     }
 

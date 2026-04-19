@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { ArrowLeft, KeyRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/retroui/Card";
 import { useRouter } from "@/lib/i18n/routing";
 
 export function JoinByCode() {
@@ -21,31 +21,29 @@ export function JoinByCode() {
   };
 
   return (
-    <motion.div
-      className="page-container"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <Button variant="subtle" icon={<ArrowLeft size={18} />} onClick={() => router.back()}>
-        {tCommon("back")}
-      </Button>
-      <h1 className="hero-title" style={{ fontSize: "2rem" }}>
-        {t("title")}
-      </h1>
-      <div className="glass-card">
-        <Input
-          mono
-          placeholder={t("codePlaceholder")}
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          maxLength={8}
-          onKeyDown={(e) => e.key === "Enter" && join()}
-          autoFocus
-        />
+    <div className="w-full max-w-md flex flex-col gap-4">
+      <div>
+        <Button variant="subtle" icon={<ArrowLeft size={18} />} onClick={() => router.back()}>
+          {tCommon("back")}
+        </Button>
       </div>
+      <h1 className="font-head text-3xl uppercase">{t("title")}</h1>
+      <Card className="w-full">
+        <Card.Content>
+          <Input
+            mono
+            placeholder={t("codePlaceholder")}
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            maxLength={8}
+            onKeyDown={(e) => e.key === "Enter" && join()}
+            autoFocus
+          />
+        </Card.Content>
+      </Card>
       <Button variant="primary" size="lg" fullWidth icon={<KeyRound size={20} />} onClick={join}>
         {t("joinButton")}
       </Button>
-    </motion.div>
+    </div>
   );
 }

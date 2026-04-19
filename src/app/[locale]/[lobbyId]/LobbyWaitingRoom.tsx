@@ -1,11 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ArrowLeft, Play, Shuffle, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { LobbyCodeDisplay } from "@/components/lobby/LobbyCodeDisplay";
 import { PlayerList } from "@/components/lobby/PlayerList";
+import { Card } from "@/components/retroui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { useRouter } from "@/lib/i18n/routing";
 import type { RoomConnection } from "@/features/game-engine/useRoomConnection";
 
@@ -29,12 +30,8 @@ export function LobbyWaitingRoom({ room, lobbyId }: LobbyWaitingRoomProps) {
   const canStart = isHost && teamA.length >= 1 && teamB.length >= 1;
 
   return (
-    <motion.div
-      className="page-container page-wide"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="w-full max-w-2xl flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-2">
         <Button
           variant="subtle"
           icon={<ArrowLeft size={18} />}
@@ -45,14 +42,14 @@ export function LobbyWaitingRoom({ room, lobbyId }: LobbyWaitingRoomProps) {
         >
           {t("leaveLobby")}
         </Button>
-        <span className="pill">
+        <Badge variant="neutral">
           {t("playerCount", { count: lobby.players.length, max: lobby.settings.maxPlayers })}
-        </span>
+        </Badge>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-md)" }}>
+      <div className="flex flex-col items-center gap-3">
         <LobbyCodeDisplay code={lobbyId} label={t("codeLabel")} />
-        <div className="text-secondary" style={{ fontSize: "0.85rem", textAlign: "center" }}>
+        <div className="text-sm text-center text-muted-foreground">
           {tCreate(`modes.${lobby.settings.mode}`)} •{" "}
           {lobby.settings.categorySlugs.map((s) => tCreate(`categories.${s}`)).join(", ")} •{" "}
           {lobby.settings.roundTime}
@@ -60,8 +57,8 @@ export function LobbyWaitingRoom({ room, lobbyId }: LobbyWaitingRoomProps) {
         </div>
       </div>
 
-      <div className="stack">
-        <div className="row" style={{ alignItems: "stretch", flexWrap: "wrap" }}>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-stretch gap-3">
           <PlayerList
             team="A"
             players={lobby.players}
@@ -81,11 +78,21 @@ export function LobbyWaitingRoom({ room, lobbyId }: LobbyWaitingRoomProps) {
         </div>
 
         {isHost && (
-          <div className="row">
-            <Button variant="ghost" icon={<Shuffle size={18} />} onClick={() => room.send({ type: "shuffle_teams" })} fullWidth>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              icon={<Shuffle size={18} />}
+              onClick={() => room.send({ type: "shuffle_teams" })}
+              fullWidth
+            >
               {t("shuffle")}
             </Button>
-            <Button variant="ghost" icon={<RefreshCw size={18} />} onClick={() => room.send({ type: "swap_teams" })} fullWidth>
+            <Button
+              variant="ghost"
+              icon={<RefreshCw size={18} />}
+              onClick={() => room.send({ type: "swap_teams" })}
+              fullWidth
+            >
               {t("swap")}
             </Button>
           </div>
@@ -104,16 +111,16 @@ export function LobbyWaitingRoom({ room, lobbyId }: LobbyWaitingRoomProps) {
           {t("startGame")}
         </Button>
       ) : (
-        <div className="glass-card" style={{ textAlign: "center" }}>
-          <span className="text-secondary">{t("waitingForHost")}</span>
-        </div>
+        <Card className="w-full">
+          <Card.Content className="text-center text-muted-foreground">
+            {t("waitingForHost")}
+          </Card.Content>
+        </Card>
       )}
 
       {!canStart && isHost && (
-        <p className="text-muted" style={{ fontSize: "0.85rem", textAlign: "center" }}>
-          {t("minPlayers")}
-        </p>
+        <p className="text-sm text-center text-muted-foreground">{t("minPlayers")}</p>
       )}
-    </motion.div>
+    </div>
   );
 }

@@ -1,9 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 import type { Team, TeamStats } from "@/types/game";
-import styles from "./ScoreBoard.module.css";
-import { cls } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/retroui/Card";
 
 interface ScoreBoardProps {
   teams: Record<Team, TeamStats>;
@@ -14,7 +13,7 @@ interface ScoreBoardProps {
 
 export function ScoreBoard({ teams, currentTeam, mode, targetScore }: ScoreBoardProps) {
   return (
-    <div className={styles.board}>
+    <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2 w-full">
       <TeamScore
         team="A"
         label="A"
@@ -23,7 +22,9 @@ export function ScoreBoard({ teams, currentTeam, mode, targetScore }: ScoreBoard
         mode={mode}
         targetScore={targetScore}
       />
-      <div className={styles.vs}>VS</div>
+      <div className="flex items-center justify-center font-head text-lg text-muted-foreground px-2">
+        VS
+      </div>
       <TeamScore
         team="B"
         label="B"
@@ -51,25 +52,23 @@ function TeamScore({
   mode?: "normal" | "sudden_death" | "bomb";
   targetScore?: number;
 }) {
+  const teamColor = team === "A" ? "bg-team-a text-team-a-foreground" : "bg-team-b text-team-b-foreground";
   return (
-    <div className={cls(styles.team, styles[`team${team}`], active && styles.active)}>
-      <div className={styles.teamLabel}>{label}</div>
-      <motion.div
-        key={stats.score}
-        className={styles.score}
-        initial={{ scale: 0.7, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", damping: 20, stiffness: 260 }}
-      >
-        {stats.score}
-      </motion.div>
-      {mode === "bomb" && typeof stats.lives === "number" ? (
-        <div className={styles.sub}>
-          {"❤️".repeat(Math.max(0, stats.lives))}
-        </div>
-      ) : targetScore ? (
-        <div className={styles.sub}>/ {targetScore}</div>
-      ) : null}
-    </div>
+    <Card
+      className={cn(
+        "w-full text-center transition-all",
+        active && "translate-y-[-2px] ring-2 ring-border",
+      )}
+    >
+      <div className={cn("py-1 font-head border-b-2 border-border", teamColor)}>{label}</div>
+      <Card.Content className="flex flex-col items-center gap-1 py-3">
+        <div className="font-head text-3xl">{stats.score}</div>
+        {mode === "bomb" && typeof stats.lives === "number" ? (
+          <div className="text-base">{"❤️".repeat(Math.max(0, stats.lives))}</div>
+        ) : targetScore ? (
+          <div className="text-xs text-muted-foreground font-mono">/ {targetScore}</div>
+        ) : null}
+      </Card.Content>
+    </Card>
   );
 }

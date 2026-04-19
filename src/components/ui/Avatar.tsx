@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import { createAvatar } from "@dicebear/core";
 import { adventurer } from "@dicebear/collection";
-import styles from "./Avatar.module.css";
-import { cls } from "@/lib/utils";
+import { Avatar as RetroAvatar } from "@/components/retroui/Avatar";
+import { cn } from "@/lib/utils";
 
 interface AvatarProps {
   avatarId: string;
@@ -12,6 +12,12 @@ interface AvatarProps {
   team?: "A" | "B" | null;
   ring?: boolean;
 }
+
+const sizeClasses: Record<NonNullable<AvatarProps["size"]>, string> = {
+  sm: "h-8 w-8",
+  md: "h-12 w-12",
+  lg: "h-16 w-16",
+};
 
 export function Avatar({ avatarId, size = "md", team, ring }: AvatarProps) {
   const dataUri = useMemo(
@@ -25,17 +31,17 @@ export function Avatar({ avatarId, size = "md", team, ring }: AvatarProps) {
   );
 
   return (
-    <div
-      className={cls(
-        styles.avatar,
-        styles[size],
-        team === "A" && styles.teamA,
-        team === "B" && styles.teamB,
-        ring && styles.ring,
-      )}
+    <RetroAvatar
       aria-label={`avatar-${avatarId}`}
+      className={cn(
+        "border-2 border-border bg-card shrink-0 shadow-xs",
+        sizeClasses[size],
+        team === "A" && "ring-4 ring-team-a ring-offset-2 ring-offset-background",
+        team === "B" && "ring-4 ring-team-b ring-offset-2 ring-offset-background",
+        ring && "ring-4 ring-primary ring-offset-2 ring-offset-background",
+      )}
     >
-      <img src={dataUri} alt="" className={styles.image} draggable={false} />
-    </div>
+      <RetroAvatar.Image src={dataUri} alt="" draggable={false} />
+    </RetroAvatar>
   );
 }

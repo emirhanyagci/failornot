@@ -1,11 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import type { Team, TeamStats } from "@/types/game";
-import styles from "./GameOverModal.module.css";
+import { cn } from "@/lib/utils";
 
 interface GameOverModalProps {
   open: boolean;
@@ -37,19 +36,16 @@ export function GameOverModal({
 
   return (
     <Modal open={open} hideCloseButton>
-      <motion.div
-        className={styles.content}
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        transition={{ type: "spring", damping: 18, stiffness: 260 }}
-      >
-        <div className={styles.trophy}>🏆</div>
-        <h2 className={styles.title}>{title}</h2>
-        <div className={styles.scores}>
+      <div className="flex flex-col items-center gap-4 text-center">
+        <div className="text-6xl" aria-hidden="true">
+          🏆
+        </div>
+        <h2 className="font-head text-2xl uppercase">{title}</h2>
+        <div className="flex flex-col gap-2 w-full">
           <ScoreRow team="A" stats={teams.A} winner={winner === "A"} />
           <ScoreRow team="B" stats={teams.B} winner={winner === "B"} />
         </div>
-        <div className={styles.actions}>
+        <div className="flex flex-col gap-2 w-full mt-1">
           {isHost ? (
             <>
               <Button variant="primary" fullWidth onClick={onPlayAgain}>
@@ -60,10 +56,10 @@ export function GameOverModal({
               </Button>
             </>
           ) : (
-            <p className={styles.waitingText}>Lobi sahibi karar veriyor...</p>
+            <p className="text-muted-foreground text-sm">Lobi sahibi karar veriyor...</p>
           )}
         </div>
-      </motion.div>
+      </div>
     </Modal>
   );
 }
@@ -77,10 +73,17 @@ function ScoreRow({
   stats: TeamStats;
   winner: boolean;
 }) {
+  const teamColor = team === "A" ? "border-team-a" : "border-team-b";
   return (
-    <div className={`${styles.row} ${styles[`team${team}`]} ${winner ? styles.winnerRow : ""}`}>
-      <span className={styles.rowTeam}>Takım {team}</span>
-      <span className={styles.rowScore}>{stats.score}</span>
+    <div
+      className={cn(
+        "flex items-center justify-between px-3 py-2 border-2 rounded bg-card",
+        teamColor,
+        winner && "bg-accent shadow-md",
+      )}
+    >
+      <span className="font-head">Takım {team}</span>
+      <span className="font-mono text-2xl font-bold">{stats.score}</span>
     </div>
   );
 }

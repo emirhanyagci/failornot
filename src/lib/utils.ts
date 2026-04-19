@@ -1,3 +1,6 @@
+import clsx, { type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
 export function generateLobbyCode(length = 5): string {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no ambiguous chars
   let out = "";
@@ -22,6 +25,10 @@ export function formatTime(seconds: number): string {
 
 export function cls(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
+}
+
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs));
 }
 
 export const AVATAR_IDS: string[] = Array.from({ length: 20 }, (_, i) =>

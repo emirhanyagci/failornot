@@ -3,7 +3,6 @@
 import { Check, Flag, SkipForward } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
-import styles from "./ActionBar.module.css";
 
 interface ActionBarProps {
   onCorrect: () => void;
@@ -26,7 +25,7 @@ export function ActionBar({
 }: ActionBarProps) {
   const t = useTranslations("game");
   return (
-    <div className={styles.bar}>
+    <div className="flex flex-col sm:flex-row gap-2 w-full">
       <Button
         variant="success"
         fullWidth

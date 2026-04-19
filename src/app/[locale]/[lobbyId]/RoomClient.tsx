@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRoomConnection } from "@/features/game-engine/useRoomConnection";
@@ -22,7 +21,6 @@ export function RoomClient({ lobbyId }: RoomClientProps) {
 
   const room = useRoomConnection({ roomId: lobbyId, autoJoin: true });
 
-  // If the user created this lobby, push the settings once they're in
   const hostedSettings = useMemo<LobbySettings | null>(() => {
     if (typeof window === "undefined") return null;
     const raw = sessionStorage.getItem(`faulornot.settings.${lobbyId}`);
@@ -44,7 +42,6 @@ export function RoomClient({ lobbyId }: RoomClientProps) {
   useEffect(() => {
     if (!room.lobby || !hostedSettings) return;
     if (room.meId !== room.lobby.hostId) return;
-    // push the hosted settings once
     const key = `faulornot.settings.${lobbyId}.pushed`;
     if (sessionStorage.getItem(key)) return;
     room.send({ type: "update_settings", payload: hostedSettings });
@@ -53,14 +50,9 @@ export function RoomClient({ lobbyId }: RoomClientProps) {
 
   if (!room.connected && !room.lobby && !room.game) {
     return (
-      <motion.div
-        className="page-container"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        style={{ alignItems: "center", justifyContent: "center", minHeight: "60vh" }}
-      >
-        <div className="text-secondary">{tCommon("connecting")}</div>
-      </motion.div>
+      <div className="w-full max-w-md flex items-center justify-center min-h-[60vh]">
+        <div className="text-muted-foreground font-head">{tCommon("connecting")}</div>
+      </div>
     );
   }
 

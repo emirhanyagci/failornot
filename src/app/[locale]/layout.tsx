@@ -1,17 +1,26 @@
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
-import { Inter, Outfit, JetBrains_Mono } from "next/font/google";
-import { Toaster } from "sonner";
+import { Archivo_Black, Space_Grotesk } from "next/font/google";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { locales, type Locale } from "@/lib/i18n/config";
 import { Background } from "@/components/layout/Background";
+import { Toaster } from "@/components/retroui/Sonner";
 import "@/app/globals.css";
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-display", display: "swap" });
-const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
-const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
+const archivoBlack = Archivo_Black({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-head",
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Faul or Not",
@@ -42,23 +51,14 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={`${outfit.variable} ${inter.variable} ${jetbrains.variable}`}>
+    <html lang={locale} className={`${archivoBlack.variable} ${spaceGrotesk.variable}`}>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Background />
-          <main className="app-shell">{children}</main>
-          <Toaster
-            position="top-center"
-            theme="dark"
-            toastOptions={{
-              style: {
-                background: "var(--surface-elevated)",
-                border: "1px solid var(--surface-glass-border)",
-                color: "var(--text-primary)",
-                fontFamily: "var(--font-body)",
-              },
-            }}
-          />
+          <main className="min-h-screen flex flex-col items-center px-4 py-6 sm:py-8">
+            {children}
+          </main>
+          <Toaster position="top-center" />
         </NextIntlClientProvider>
       </body>
     </html>

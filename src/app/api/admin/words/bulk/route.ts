@@ -86,14 +86,15 @@ export async function POST(request: Request) {
   try {
     const slugMap = await getCategorySlugToId(admin);
 
-    const rows: Array<{
+    interface Row {
       category_id: string;
       word: string;
       forbidden_words: string[];
       difficulty: number;
       language: string;
       is_active: boolean;
-    }> = [];
+    }
+    const candidateRows: Row[] = [];
     const unknownCategories = new Set<string>();
     for (const v of valid) {
       const categoryId = slugMap.get(v.categorySlug);
@@ -101,7 +102,7 @@ export async function POST(request: Request) {
         unknownCategories.add(v.categorySlug);
         continue;
       }
-      rows.push({
+      candidateRows.push({
         category_id: categoryId,
         word: v.word,
         forbidden_words: v.forbidden_words,
@@ -111,30 +112,92 @@ export async function POST(request: Request) {
       });
     }
 
-    let upserted = 0;
+    // DB'de zaten var olan (word, language) çiftlerini topla → skip et.
+    const existingKeys = new Set<string>();
+    const languages = Array.from(new Set(candidateRows.map((r) => r.language)));
+    for (const lang of languages) {
+      const wordsForLang = candidateRows
+        .filter((r) => r.language === lang)
+        .map((r) => r.word);
+      // Sorguyu küçük parçalara böl (URL/parametre limitleri için).
+      for (let i = 0; i < wordsForLang.length; i += BATCH) {
+        const chunk = wordsForLang.slice(i, i + BATCH);
+        const { data, error } = await admin
+          .from("words")
+          .select("word, language")
+          .eq("language", lang)
+          .in("word", chunk);
+        if (error) {
+          return NextResponse.json(
+            { ok: false, error: error.message },
+            { status: 500 },
+          );
+        }
+        for (const row of (data ?? []) as Array<{ word: string; language: string }>) {
+          existingKeys.add(`${row.word}::${row.language}`);
+        }
+      }
+    }
+
+    const skipped: string[] = [];
+    const rows: Row[] = [];
+    for (const r of candidateRows) {
+      if (existingKeys.has(`${r.word}::${r.language}`)) {
+        skipped.push(r.word);
+        continue;
+      }
+      rows.push(r);
+    }
+
+    let inserted = 0;
     for (let i = 0; i < rows.length; i += BATCH) {
       const chunk = rows.slice(i, i + BATCH);
       const { error } = await admin
         .from("words")
-        .upsert(chunk, { onConflict: "word,language", ignoreDuplicates: false });
+        .insert(chunk);
       if (error) {
-        return NextResponse.json(
-          {
-            ok: false,
-            error: error.message,
-            upserted,
-            remaining: rows.length - upserted,
-          },
-          { status: 500 },
-        );
+        // Yarış durumu: aynı anda eklenen kayıtlar olabilir.
+        // Bu durumda "ignoreDuplicates" ile yeniden dene.
+        if (
+          typeof (error as { code?: string }).code === "string" &&
+          (error as { code: string }).code === "23505"
+        ) {
+          const { error: retryError } = await admin
+            .from("words")
+            .upsert(chunk, { onConflict: "word,language", ignoreDuplicates: true });
+          if (retryError) {
+            return NextResponse.json(
+              {
+                ok: false,
+                error: retryError.message,
+                inserted,
+                remaining: rows.length - inserted,
+              },
+              { status: 500 },
+            );
+          }
+        } else {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: error.message,
+              inserted,
+              remaining: rows.length - inserted,
+            },
+            { status: 500 },
+          );
+        }
       }
-      upserted += chunk.length;
+      inserted += chunk.length;
     }
 
     return NextResponse.json({
       ok: true,
       received: items.length,
-      upserted,
+      upserted: inserted,
+      inserted,
+      skipped: skipped.length,
+      skippedWords: skipped.slice(0, 50),
       validationErrors: errors,
       unknownCategories: Array.from(unknownCategories),
     });

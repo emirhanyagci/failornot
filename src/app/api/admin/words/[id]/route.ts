@@ -47,6 +47,24 @@ export async function PATCH(
 
   const payload = body as Record<string, unknown>;
 
+  // Aynı (word, language) çiftine sahip BAŞKA bir kayıt varsa: çakışma.
+  const { data: conflict, error: conflictError } = await admin
+    .from("words")
+    .select("id")
+    .eq("word", row.word)
+    .eq("language", row.language)
+    .neq("id", id)
+    .maybeSingle();
+  if (conflictError) {
+    return NextResponse.json(
+      { ok: false, error: conflictError.message },
+      { status: 500 },
+    );
+  }
+  if (conflict) {
+    return NextResponse.json({ ok: false, error: "ALREADY_EXISTS" }, { status: 409 });
+  }
+
   const { data, error } = await admin
     .from("words")
     .update({
@@ -62,6 +80,15 @@ export async function PATCH(
     .single();
 
   if (error) {
+    if (
+      typeof (error as { code?: string }).code === "string" &&
+      (error as { code: string }).code === "23505"
+    ) {
+      return NextResponse.json(
+        { ok: false, error: "ALREADY_EXISTS" },
+        { status: 409 },
+      );
+    }
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
   if (!data) {

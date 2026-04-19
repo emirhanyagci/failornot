@@ -6,8 +6,9 @@ import { FileJson, LogOut, PenLine, Plus, Search, Trash2, Upload } from "lucide-
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { cls } from "@/lib/utils";
-import styles from "./admin.module.css";
+import { Card } from "@/components/retroui/Card";
+import { cn } from "@/lib/utils";
+import { capitalizeWord } from "@/lib/admin/words";
 
 interface Category {
   id: string;
@@ -70,45 +71,35 @@ export function AdminPanel() {
   }
 
   return (
-    <div className={styles.panelWrap}>
-      <header className={styles.panelHeader}>
-        <div>
-          <h1 className={styles.title}>Kelime Yönetimi</h1>
-          <p className={styles.subtitle}>Oyunda görünecek kelimeleri buradan yönet.</p>
+    <div className="w-full max-w-5xl py-4 flex flex-col gap-5">
+      <header className="flex items-end justify-between gap-3 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-head text-2xl uppercase">Kelime Yönetimi</h1>
+          <p className="text-muted-foreground text-sm">
+            Oyunda görünecek kelimeleri buradan yönet.
+          </p>
         </div>
-        <Button variant="ghost" size="sm" icon={<LogOut size={14} />} onClick={logout}>
+        <Button size="sm" icon={<LogOut size={14} />} onClick={logout}>
           Çıkış
         </Button>
       </header>
 
       {catsError && (
-        <div className={styles.errorBanner}>
+        <div className="px-3 py-2 border-2 border-destructive bg-destructive/10 text-destructive font-head rounded text-sm">
           <strong>Hata:</strong> {catsError}
         </div>
       )}
 
-      <nav className={styles.tabs}>
-        <button
-          className={cls(styles.tab, tab === "single" && styles.tabActive)}
-          onClick={() => setTab("single")}
-          type="button"
-        >
+      <nav className="inline-flex gap-1 p-1 border-2 border-border bg-card rounded w-fit">
+        <TabButton active={tab === "single"} onClick={() => setTab("single")}>
           <PenLine size={16} /> Tek Kelime
-        </button>
-        <button
-          className={cls(styles.tab, tab === "bulk" && styles.tabActive)}
-          onClick={() => setTab("bulk")}
-          type="button"
-        >
+        </TabButton>
+        <TabButton active={tab === "bulk"} onClick={() => setTab("bulk")}>
           <FileJson size={16} /> JSON Toplu Yükleme
-        </button>
-        <button
-          className={cls(styles.tab, tab === "manage" && styles.tabActive)}
-          onClick={() => setTab("manage")}
-          type="button"
-        >
+        </TabButton>
+        <TabButton active={tab === "manage"} onClick={() => setTab("manage")}>
           <Search size={16} /> Tum Kelimeler
-        </button>
+        </TabButton>
       </nav>
 
       {tab === "single" ? (
@@ -126,11 +117,34 @@ export function AdminPanel() {
           onCategoryChange={setDefaultCategory}
         />
       ) : (
-        <WordsManager
-          categories={categories}
-        />
+        <WordsManager categories={categories} />
       )}
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-1.5 px-3 py-2 rounded font-head text-sm transition-colors",
+        active
+          ? "bg-primary text-primary-foreground"
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -189,7 +203,7 @@ function SingleWordForm({
         setFeedback({ ok: false, msg: friendlyError(reason) });
         return;
       }
-      setFeedback({ ok: true, msg: `"${word.trim()}" eklendi.` });
+      setFeedback({ ok: true, msg: `"${capitalizeWord(word)}" eklendi.` });
       setWord("");
       setForbidden([...EMPTY_FORBIDDEN]);
     } catch {
@@ -200,53 +214,51 @@ function SingleWordForm({
   }
 
   return (
-    <section className={styles.card}>
-      <CategorySelect
-        categories={categories}
-        loading={categoriesLoading}
-        value={defaultCategory}
-        onChange={onCategoryChange}
-      />
+    <Card className="w-full">
+      <Card.Content className="flex flex-col gap-4">
+        <CategorySelect
+          categories={categories}
+          loading={categoriesLoading}
+          value={defaultCategory}
+          onChange={onCategoryChange}
+        />
 
-      <Input
-        label="Kelime"
-        value={word}
-        onChange={(e) => setWord(e.target.value)}
-        placeholder="Örn: Güneş"
-        maxLength={64}
-      />
+        <Input
+          label="Kelime"
+          value={word}
+          onChange={(e) => setWord(e.target.value)}
+          placeholder="Örn: Güneş"
+          maxLength={64}
+        />
 
-      <div className={styles.forbiddenGrid}>
-        {forbidden.map((v, i) => (
-          <Input
-            key={i}
-            label={`Yasaklı ${i + 1}`}
-            value={v}
-            onChange={(e) => setForbiddenAt(i, e.target.value)}
-            maxLength={32}
-            placeholder={["ışık", "sıcak", "yıldız", "gündüz", "sarı"][i]}
-          />
-        ))}
-      </div>
-
-      {feedback && (
-        <div className={cls(styles.feedback, feedback.ok ? styles.ok : styles.err)}>
-          {feedback.msg}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2">
+          {forbidden.map((v, i) => (
+            <Input
+              key={i}
+              label={`Yasaklı ${i + 1}`}
+              value={v}
+              onChange={(e) => setForbiddenAt(i, e.target.value)}
+              maxLength={32}
+              placeholder={["ışık", "sıcak", "yıldız", "gündüz", "sarı"][i]}
+            />
+          ))}
         </div>
-      )}
 
-      <div className={styles.actions}>
-        <Button
-          variant="primary"
-          icon={<Plus size={16} />}
-          onClick={onSubmit}
-          disabled={!canSubmit}
-          loading={submitting}
-        >
-          Kelimeyi Ekle
-        </Button>
-      </div>
-    </section>
+        {feedback && <FeedbackBox feedback={feedback}>{feedback.msg}</FeedbackBox>}
+
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="primary"
+            icon={<Plus size={16} />}
+            onClick={onSubmit}
+            disabled={!canSubmit}
+            loading={submitting}
+          >
+            Kelimeyi Ekle
+          </Button>
+        </div>
+      </Card.Content>
+    </Card>
   );
 }
 
@@ -283,6 +295,9 @@ function BulkJsonForm({
         ok: boolean;
         received?: number;
         upserted?: number;
+        inserted?: number;
+        skipped?: number;
+        skippedWords?: string[];
         errors?: Array<{ index: number; reason: string }>;
         unknownCategories?: string[];
         msg?: string;
@@ -290,7 +305,7 @@ function BulkJsonForm({
   >(null);
 
   const parsed = useMemo(() => {
-    if (!raw.trim()) return { ok: false, count: 0, error: null };
+    if (!raw.trim()) return { ok: false, count: 0, error: null as string | null };
     try {
       const value = JSON.parse(raw);
       if (Array.isArray(value)) return { ok: true, count: value.length, error: null };
@@ -324,10 +339,9 @@ function BulkJsonForm({
         setSubmitting(false);
         return;
       }
-      const payload =
-        Array.isArray(body)
-          ? { words: body, defaultCategorySlug: defaultCategory }
-          : { ...(body as object), defaultCategorySlug: defaultCategory };
+      const payload = Array.isArray(body)
+        ? { words: body, defaultCategorySlug: defaultCategory }
+        : { ...(body as object), defaultCategorySlug: defaultCategory };
 
       const res = await fetch("/api/admin/words/bulk", {
         method: "POST",
@@ -338,6 +352,9 @@ function BulkJsonForm({
         ok?: boolean;
         received?: number;
         upserted?: number;
+        inserted?: number;
+        skipped?: number;
+        skippedWords?: string[];
         error?: string;
         errors?: Array<{ index: number; reason: string }>;
         unknownCategories?: string[];
@@ -355,10 +372,13 @@ function BulkJsonForm({
         ok: true,
         received: data.received,
         upserted: data.upserted,
+        inserted: data.inserted,
+        skipped: data.skipped,
+        skippedWords: data.skippedWords,
         errors: data.errors,
         unknownCategories: data.unknownCategories,
       });
-      if ((data.errors?.length ?? 0) === 0) setRaw("");
+      if ((data.errors?.length ?? 0) === 0 && (data.skipped ?? 0) === 0) setRaw("");
     } catch {
       setFeedback({ ok: false, msg: "Sunucuya ulaşılamadı." });
     } finally {
@@ -369,127 +389,148 @@ function BulkJsonForm({
   const disabled = submitting || !parsed.ok || parsed.count === 0 || !defaultCategory;
 
   return (
-    <section className={styles.card}>
-      <CategorySelect
-        categories={categories}
-        loading={categoriesLoading}
-        value={defaultCategory}
-        onChange={onCategoryChange}
-        label="Varsayılan kategori (JSON içinde `categorySlug` yoksa buraya düşer)"
-      />
+    <Card className="w-full">
+      <Card.Content className="flex flex-col gap-4">
+        <CategorySelect
+          categories={categories}
+          loading={categoriesLoading}
+          value={defaultCategory}
+          onChange={onCategoryChange}
+          label="Varsayılan kategori (JSON içinde `categorySlug` yoksa buraya düşer)"
+        />
 
-      <div className={styles.bulkToolbar}>
-        <label className={styles.fileBtn}>
-          <Upload size={14} />
-          <span>.json dosyası seç</span>
-          <input
-            type="file"
-            accept="application/json,.json"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) onFile(f);
-            }}
-          />
-        </label>
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={<FileJson size={14} />}
-          onClick={() => setRaw(SAMPLE_JSON)}
-          type="button"
-        >
-          Örnek JSON yükle
-        </Button>
-        {raw && (
+        <div className="flex gap-2 items-center flex-wrap">
+          <label className="inline-flex items-center gap-1.5 px-3 py-2 border-2 border-border bg-card rounded shadow-xs hover:bg-accent transition-colors text-sm cursor-pointer">
+            <Upload size={14} />
+            <span>.json dosyası seç</span>
+            <input
+              type="file"
+              className="hidden"
+              accept="application/json,.json"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onFile(f);
+              }}
+            />
+          </label>
           <Button
             variant="ghost"
             size="sm"
-            icon={<Trash2 size={14} />}
-            onClick={() => setRaw("")}
+            icon={<FileJson size={14} />}
+            onClick={() => setRaw(SAMPLE_JSON)}
             type="button"
           >
-            Temizle
+            Örnek JSON yükle
           </Button>
-        )}
-      </div>
+          {raw && (
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Trash2 size={14} />}
+              onClick={() => setRaw("")}
+              type="button"
+            >
+              Temizle
+            </Button>
+          )}
+        </div>
 
-      <label className={styles.textareaLabel}>
-        <span>JSON içerik</span>
-        <textarea
-          className={styles.textarea}
-          value={raw}
-          onChange={(e) => setRaw(e.target.value)}
-          placeholder={SAMPLE_JSON}
-          rows={16}
-          spellCheck={false}
-        />
-      </label>
-
-      <div className={styles.parseInfo}>
-        {parsed.ok ? (
-          <span className={styles.parseOk}>
-            JSON geçerli · {parsed.count} kayıt tespit edildi
+        <label className="flex flex-col gap-1.5">
+          <span className="font-head text-xs uppercase tracking-wider text-muted-foreground">
+            JSON içerik
           </span>
-        ) : parsed.error ? (
-          <span className={styles.parseErr}>Parse hatası: {parsed.error}</span>
-        ) : (
-          <span className={styles.parseIdle}>JSON bekleniyor…</span>
-        )}
-      </div>
+          <textarea
+            className="w-full min-h-[280px] p-3 border-2 border-border bg-card text-card-foreground rounded font-mono text-sm leading-relaxed resize-y shadow-xs focus:outline-hidden focus:shadow-none"
+            value={raw}
+            onChange={(e) => setRaw(e.target.value)}
+            placeholder={SAMPLE_JSON}
+            rows={16}
+            spellCheck={false}
+          />
+        </label>
 
-      <div className={styles.actions}>
-        <Button
-          variant="primary"
-          icon={<Upload size={16} />}
-          onClick={onSubmit}
-          disabled={disabled}
-          loading={submitting}
-        >
-          {parsed.count > 0 ? `${parsed.count} kelimeyi yükle` : "Yükle"}
-        </Button>
-      </div>
+        <div className="text-sm">
+          {parsed.ok ? (
+            <span className="text-success font-head">
+              JSON geçerli · {parsed.count} kayıt tespit edildi
+            </span>
+          ) : parsed.error ? (
+            <span className="text-destructive font-head">Parse hatası: {parsed.error}</span>
+          ) : (
+            <span className="text-muted-foreground">JSON bekleniyor…</span>
+          )}
+        </div>
 
-      {feedback && (
-        <div className={cls(styles.feedback, feedback.ok ? styles.ok : styles.err)}>
-          {feedback.ok ? (
-            <>
-              <strong>Başarılı.</strong> {feedback.upserted}/{feedback.received} kayıt eklendi.
-              {(feedback.errors?.length ?? 0) > 0 && (
-                <div className={styles.errorList}>
-                  <div>Atlanan {feedback.errors!.length} kayıt:</div>
-                  <ul>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="primary"
+            icon={<Upload size={16} />}
+            onClick={onSubmit}
+            disabled={disabled}
+            loading={submitting}
+          >
+            {parsed.count > 0 ? `${parsed.count} kelimeyi yükle` : "Yükle"}
+          </Button>
+        </div>
+
+        {feedback && (
+          <FeedbackBox feedback={feedback}>
+            {feedback.ok ? (
+              <>
+                <strong>Başarılı.</strong> {feedback.inserted ?? feedback.upserted}/
+                {feedback.received} kayıt eklendi.
+                {(feedback.skipped ?? 0) > 0 && (
+                  <div className="mt-1 text-sm">
+                    Zaten mevcut olduğu için atlanan {feedback.skipped} kelime:
+                    {feedback.skippedWords && feedback.skippedWords.length > 0 && (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        {feedback
+                          .skippedWords!.slice(0, 20)
+                          .map((w) => capitalizeWord(w))
+                          .join(", ")}
+                        {feedback.skippedWords!.length > 20 ? "…" : ""}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {(feedback.errors?.length ?? 0) > 0 && (
+                  <div className="mt-1 text-sm">
+                    <div>Atlanan {feedback.errors!.length} kayıt:</div>
+                    <ul className="mt-1 ml-5 list-disc">
+                      {feedback.errors!.slice(0, 20).map((e, i) => (
+                        <li key={i}>
+                          #{e.index + 1} — {friendlyError(e.reason)}
+                        </li>
+                      ))}
+                      {feedback.errors!.length > 20 && <li>…</li>}
+                    </ul>
+                  </div>
+                )}
+                {(feedback.unknownCategories?.length ?? 0) > 0 && (
+                  <div className="mt-1 text-sm">
+                    Bilinmeyen kategori(ler): {feedback.unknownCategories!.join(", ")}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <strong>Hata:</strong> {feedback.msg}
+                {(feedback.errors?.length ?? 0) > 0 && (
+                  <ul className="mt-1 ml-5 list-disc text-sm">
                     {feedback.errors!.slice(0, 20).map((e, i) => (
                       <li key={i}>
                         #{e.index + 1} — {friendlyError(e.reason)}
                       </li>
                     ))}
-                    {feedback.errors!.length > 20 && <li>…</li>}
                   </ul>
-                </div>
-              )}
-              {(feedback.unknownCategories?.length ?? 0) > 0 && (
-                <div className={styles.errorList}>
-                  Bilinmeyen kategori(ler): {feedback.unknownCategories!.join(", ")}
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <strong>Hata:</strong> {feedback.msg}
-              {(feedback.errors?.length ?? 0) > 0 && (
-                <ul className={styles.errorList}>
-                  {feedback.errors!.slice(0, 20).map((e, i) => (
-                    <li key={i}>
-                      #{e.index + 1} — {friendlyError(e.reason)}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </section>
+                )}
+              </>
+            )}
+          </FeedbackBox>
+        )}
+      </Card.Content>
+    </Card>
   );
 }
 
@@ -505,11 +546,7 @@ interface AdminWord {
   category: { slug: string; name_tr: string; icon: string | null } | null;
 }
 
-function WordsManager({
-  categories,
-}: {
-  categories: Category[];
-}) {
+function WordsManager({ categories }: { categories: Category[] }) {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [query, setQuery] = useState("");
   const [words, setWords] = useState<AdminWord[]>([]);
@@ -570,20 +607,20 @@ function WordsManager({
   }
 
   return (
-    <section className={styles.card}>
-      <div className={styles.managerToolbar}>
-        <CategorySelect
-          categories={categories}
-          loading={false}
-          value={selectedCategory}
-          onChange={(value) => {
-            setSelectedCategory(value);
-            setPage(1);
-          }}
-          allowEmpty
-          emptyLabel="Tumu"
-        />
-        <div className={styles.searchRow}>
+    <Card className="w-full">
+      <Card.Content className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(220px,320px)_minmax(260px,1fr)] gap-3 items-end">
+          <CategorySelect
+            categories={categories}
+            loading={false}
+            value={selectedCategory}
+            onChange={(value) => {
+              setSelectedCategory(value);
+              setPage(1);
+            }}
+            allowEmpty
+            emptyLabel="Tumu"
+          />
           <Input
             label="Kelime ara"
             value={query}
@@ -594,81 +631,95 @@ function WordsManager({
             placeholder="Orn: Futbol"
           />
         </div>
-      </div>
 
-      {error && <div className={cls(styles.feedback, styles.err)}>{error}</div>}
+        {error && (
+          <div className="px-3 py-2 border-2 border-destructive bg-destructive/10 text-destructive font-head text-sm rounded">
+            {error}
+          </div>
+        )}
 
-      <div className={styles.wordsList}>
-        {loading ? (
-          <div className={styles.emptyState}>Yukleniyor...</div>
-        ) : words.length === 0 ? (
-          <div className={styles.emptyState}>Filtreye uygun kelime bulunamadi.</div>
-        ) : (
-          words.map((item) => (
-            <article key={item.id} className={styles.wordCard}>
-              <div className={styles.wordCardHead}>
-                <div>
-                  <div className={styles.wordTitle}>{item.word}</div>
-                  <div className={styles.wordMeta}>
-                    {item.category?.icon ? `${item.category.icon} ` : ""}
-                    {item.category?.name_tr ?? "Kategori yok"} · Dil: {item.language} · Zorluk:{" "}
-                    {item.difficulty} · {item.is_active ? "Aktif" : "Pasif"}
+        <div className="flex flex-col gap-3">
+          {loading ? (
+            <div className="text-center py-6 border-2 border-dashed border-border rounded text-muted-foreground">
+              Yukleniyor...
+            </div>
+          ) : words.length === 0 ? (
+            <div className="text-center py-6 border-2 border-dashed border-border rounded text-muted-foreground">
+              Filtreye uygun kelime bulunamadi.
+            </div>
+          ) : (
+            words.map((item) => (
+              <article
+                key={item.id}
+                className="border-2 border-border rounded p-3 bg-card flex flex-col gap-2"
+              >
+                <div className="flex justify-between items-start gap-2 flex-wrap">
+                  <div>
+                    <div className="font-head text-base">{capitalizeWord(item.word)}</div>
+                    <div className="text-muted-foreground text-sm">
+                      {item.category?.icon ? `${item.category.icon} ` : ""}
+                      {item.category?.name_tr ?? "Kategori yok"} · Dil: {item.language} · Zorluk:{" "}
+                      {item.difficulty} · {item.is_active ? "Aktif" : "Pasif"}
+                    </div>
+                  </div>
+                  <div className="inline-flex gap-1.5">
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(item)}>
+                      Duzenle
+                    </Button>
+                    <Button size="sm" variant="danger" onClick={() => void removeWord(item.id)}>
+                      Sil
+                    </Button>
                   </div>
                 </div>
-                <div className={styles.wordActions}>
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(item)}>
-                    Duzenle
-                  </Button>
-                  <Button size="sm" variant="danger" onClick={() => void removeWord(item.id)}>
-                    Sil
-                  </Button>
+                <div className="flex flex-wrap gap-1.5">
+                  {item.forbidden_words.map((f) => (
+                    <span
+                      key={f}
+                      className="border-2 border-border bg-accent text-accent-foreground rounded px-2 py-0.5 text-xs font-head"
+                    >
+                      {capitalizeWord(f)}
+                    </span>
+                  ))}
                 </div>
-              </div>
-              <div className={styles.forbiddenTags}>
-                {item.forbidden_words.map((f) => (
-                  <span key={f} className={styles.tag}>
-                    {f}
-                  </span>
-                ))}
-              </div>
-            </article>
-          ))
-        )}
-      </div>
+              </article>
+            ))
+          )}
+        </div>
 
-      <div className={styles.pagination}>
-        <Button
-          size="sm"
-          variant="ghost"
-          disabled={page <= 1 || loading}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-        >
-          Onceki
-        </Button>
-        <span>
-          Sayfa {page} / {pageCount} · Toplam {total}
-        </span>
-        <Button
-          size="sm"
-          variant="ghost"
-          disabled={page >= pageCount || loading}
-          onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-        >
-          Sonraki
-        </Button>
-      </div>
+        <div className="flex items-center justify-between gap-2 flex-col sm:flex-row text-muted-foreground text-sm">
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={page <= 1 || loading}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Onceki
+          </Button>
+          <span>
+            Sayfa {page} / {pageCount} · Toplam {total}
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={page >= pageCount || loading}
+            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+          >
+            Sonraki
+          </Button>
+        </div>
 
-      <EditWordModal
-        open={!!editing}
-        word={editing}
-        categories={categories}
-        onClose={() => setEditing(null)}
-        onSaved={() => {
-          setEditing(null);
-          void loadWords();
-        }}
-      />
-    </section>
+        <EditWordModal
+          open={!!editing}
+          word={editing}
+          categories={categories}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            void loadWords();
+          }}
+        />
+      </Card.Content>
+    </Card>
   );
 }
 
@@ -699,13 +750,13 @@ function EditWordModal({
   useEffect(() => {
     if (!word) return;
     setForm({
-      word: word.word,
+      word: capitalizeWord(word.word),
       forbidden: [
-        word.forbidden_words[0] ?? "",
-        word.forbidden_words[1] ?? "",
-        word.forbidden_words[2] ?? "",
-        word.forbidden_words[3] ?? "",
-        word.forbidden_words[4] ?? "",
+        capitalizeWord(word.forbidden_words[0] ?? ""),
+        capitalizeWord(word.forbidden_words[1] ?? ""),
+        capitalizeWord(word.forbidden_words[2] ?? ""),
+        capitalizeWord(word.forbidden_words[3] ?? ""),
+        capitalizeWord(word.forbidden_words[4] ?? ""),
       ],
       categorySlug: word.category?.slug ?? categories[0]?.slug ?? "",
       difficulty: word.difficulty,
@@ -754,9 +805,9 @@ function EditWordModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Kelimeyi Duzenle">
+    <Modal open={open} onClose={onClose} title="Kelimeyi Duzenle" wide>
       {word && (
-        <div className={styles.editForm}>
+        <div className="flex flex-col gap-4">
           <Input
             label="Kelime"
             value={form.word}
@@ -769,11 +820,13 @@ function EditWordModal({
             value={form.categorySlug}
             onChange={(value) => setForm((prev) => ({ ...prev, categorySlug: value }))}
           />
-          <div className={styles.editMeta}>
-            <label className={styles.selectWrap}>
-              <span>Zorluk</span>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1.5">
+              <span className="font-head text-xs uppercase tracking-wider text-muted-foreground">
+                Zorluk
+              </span>
               <select
-                className={styles.select}
+                className="px-3 py-2 border-2 border-border bg-card text-card-foreground rounded font-sans shadow-xs focus:outline-hidden focus:shadow-none"
                 value={String(form.difficulty)}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, difficulty: Number(e.target.value) || 1 }))
@@ -791,15 +844,16 @@ function EditWordModal({
               maxLength={8}
             />
           </div>
-          <label className={styles.toggleRow}>
+          <label className="inline-flex items-center gap-2 font-head text-sm">
             <input
               type="checkbox"
               checked={form.isActive}
               onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked }))}
+              className="w-4 h-4 border-2 border-border accent-primary"
             />
             <span>Aktif</span>
           </label>
-          <div className={styles.forbiddenGrid}>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2">
             {form.forbidden.map((v, i) => (
               <Input
                 key={i}
@@ -810,8 +864,12 @@ function EditWordModal({
               />
             ))}
           </div>
-          {error && <div className={cls(styles.feedback, styles.err)}>{error}</div>}
-          <div className={styles.actions}>
+          {error && (
+            <div className="px-3 py-2 border-2 border-destructive bg-destructive/10 text-destructive font-head text-sm rounded">
+              {error}
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose}>
               Vazgec
             </Button>
@@ -826,6 +884,27 @@ function EditWordModal({
 }
 
 /* ---------------- Shared ---------------- */
+
+function FeedbackBox({
+  feedback,
+  children,
+}: {
+  feedback: { ok: boolean };
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "px-3 py-2 border-2 rounded text-sm",
+        feedback.ok
+          ? "border-success bg-success/10 text-foreground"
+          : "border-destructive bg-destructive/10 text-foreground",
+      )}
+    >
+      {children}
+    </div>
+  );
+}
 
 function CategorySelect({
   categories,
@@ -845,17 +924,21 @@ function CategorySelect({
   emptyLabel?: string;
 }) {
   return (
-    <label className={styles.selectWrap}>
-      <span>{label}</span>
+    <label className="flex flex-col gap-1.5">
+      <span className="font-head text-xs uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
       <select
-        className={styles.select}
+        className="px-3 py-2 border-2 border-border bg-card text-card-foreground rounded font-sans shadow-xs focus:outline-hidden focus:shadow-none disabled:opacity-50"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={loading || categories.length === 0}
       >
         {loading && <option>Yükleniyor…</option>}
         {!loading && categories.length === 0 && <option>Kategori yok</option>}
-        {!loading && allowEmpty && categories.length > 0 && <option value="">{emptyLabel}</option>}
+        {!loading && allowEmpty && categories.length > 0 && (
+          <option value="">{emptyLabel}</option>
+        )}
         {!loading &&
           categories.map((c) => (
             <option key={c.slug} value={c.slug}>
@@ -888,6 +971,10 @@ function friendlyError(code: string): string {
       return "Kategori seçilmedi.";
     case "DUPLICATE_IN_BATCH":
       return "Aynı kelime toplu içerikte tekrar ediyor.";
+    case "ALREADY_EXISTS":
+      return "Bu kelime zaten mevcut, atlandı.";
+    case "FORBIDDEN_DUPLICATE":
+      return "Yasaklı kelimeler kendi içinde tekrar ediyor.";
     case "UNKNOWN_CATEGORY":
       return "Bilinmeyen kategori.";
     case "EXPECTED_ARRAY":

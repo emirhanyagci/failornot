@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, KeyRound, Plus, Globe, Lightbulb } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { Card } from "@/components/retroui/Card";
 import { usePlayerStore } from "@/stores/usePlayerStore";
 import { useRouter } from "@/lib/i18n/routing";
-import styles from "./MainMenu.module.css";
 import { toast } from "sonner";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 
@@ -35,56 +34,44 @@ export function MainMenu() {
   };
 
   return (
-    <div className="page-container">
-      <motion.header
-        className={styles.header}
-        initial={{ opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="hero-title">{t("title")}</h1>
-        <p className="hero-subtitle">{t("subtitle")}</p>
-      </motion.header>
+    <div className="w-full max-w-md flex flex-col gap-6">
+      <header className="flex flex-col items-center text-center gap-2 mt-8">
+        <h1 className="font-head text-4xl sm:text-5xl uppercase">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
+      </header>
 
-      <motion.section
-        className={styles.identity}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <div className={styles.avatarRow}>
-          <button
-            className={styles.avatarArrow}
-            onClick={() => cycleAvatar(-1)}
-            aria-label={t("prevAvatar")}
-          >
-            <ChevronLeft size={24} />
-          </button>
-          <motion.div key={avatarId} initial={{ scale: 0.9 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 18, stiffness: 260 }}>
+      <Card className="w-full">
+        <Card.Content className="flex flex-col gap-4 items-stretch">
+          <div className="flex items-center justify-center gap-4">
+            <button
+              type="button"
+              className="border-2 border-border bg-card p-2 rounded shadow-xs hover:bg-accent transition-colors"
+              onClick={() => cycleAvatar(-1)}
+              aria-label={t("prevAvatar")}
+            >
+              <ChevronLeft size={24} />
+            </button>
             <Avatar avatarId={avatarId} size="lg" ring />
-          </motion.div>
-          <button
-            className={styles.avatarArrow}
-            onClick={() => cycleAvatar(1)}
-            aria-label={t("nextAvatar")}
-          >
-            <ChevronRight size={24} />
-          </button>
-        </div>
+            <button
+              type="button"
+              className="border-2 border-border bg-card p-2 rounded shadow-xs hover:bg-accent transition-colors"
+              onClick={() => cycleAvatar(1)}
+              aria-label={t("nextAvatar")}
+            >
+              <ChevronRight size={24} />
+            </button>
+          </div>
 
-        <Input
-          placeholder={t("usernamePlaceholder")}
-          value={hydrated ? username : ""}
-          onChange={(e) => setUsername(e.target.value)}
-          maxLength={16}
-        />
-      </motion.section>
+          <Input
+            placeholder={t("usernamePlaceholder")}
+            value={hydrated ? username : ""}
+            onChange={(e) => setUsername(e.target.value)}
+            maxLength={16}
+          />
+        </Card.Content>
+      </Card>
 
-      <motion.section
-        className="stack"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
+      <section className="flex flex-col gap-3">
         <Button
           variant="primary"
           size="lg"
@@ -126,9 +113,9 @@ export function MainMenu() {
         >
           {t("suggestWord")}
         </Button>
-      </motion.section>
+      </section>
 
-      <div className={styles.footer}>
+      <div className="text-center text-muted-foreground text-xs mt-2">
         <span>{t("version")}</span>
       </div>
 
@@ -172,30 +159,34 @@ function SuggestWordModal({ open, onClose }: { open: boolean; onClose: () => voi
 
   return (
     <Modal open={open} onClose={onClose} title={t("suggestWord")}>
-      <Input
-        label="Kelime"
-        placeholder="Ör. Kahve"
-        value={word}
-        onChange={(e) => setWord(e.target.value)}
-      />
-      <div className="stack-sm">
-        <span className={styles.forbiddenLabel}>Yasak Kelimeler</span>
-        {forbidden.map((f, i) => (
-          <Input
-            key={i}
-            placeholder={`Yasak ${i + 1}`}
-            value={f}
-            onChange={(e) => {
-              const next = [...forbidden];
-              next[i] = e.target.value;
-              setForbidden(next);
-            }}
-          />
-        ))}
+      <div className="flex flex-col gap-3">
+        <Input
+          label="Kelime"
+          placeholder="Ör. Kahve"
+          value={word}
+          onChange={(e) => setWord(e.target.value)}
+        />
+        <div className="flex flex-col gap-2">
+          <span className="font-head text-xs uppercase tracking-wider text-muted-foreground">
+            Yasak Kelimeler
+          </span>
+          {forbidden.map((f, i) => (
+            <Input
+              key={i}
+              placeholder={`Yasak ${i + 1}`}
+              value={f}
+              onChange={(e) => {
+                const next = [...forbidden];
+                next[i] = e.target.value;
+                setForbidden(next);
+              }}
+            />
+          ))}
+        </div>
+        <Button variant="primary" fullWidth loading={submitting} onClick={submit}>
+          Gönder
+        </Button>
       </div>
-      <Button variant="primary" fullWidth loading={submitting} onClick={submit}>
-        Gönder
-      </Button>
     </Modal>
   );
 }

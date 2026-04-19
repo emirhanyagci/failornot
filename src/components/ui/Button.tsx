@@ -1,8 +1,8 @@
 "use client";
 
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
-import styles from "./Button.module.css";
-import { cls } from "@/lib/utils";
+import { Button as RetroButton } from "@/components/retroui/Button";
+import { cn } from "@/lib/utils";
 
 type Variant =
   | "primary"
@@ -23,6 +23,31 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
+const variantToRetro: Record<
+  Variant,
+  { variant: "default" | "secondary" | "outline" | "link" | "ghost"; extra?: string }
+> = {
+  primary: { variant: "default" },
+  accent: {
+    variant: "default",
+    extra: "bg-accent text-accent-foreground hover:bg-accent/80",
+  },
+  ghost: { variant: "ghost" },
+  subtle: { variant: "outline" },
+  success: {
+    variant: "default",
+    extra: "bg-success text-success-foreground hover:bg-success/80",
+  },
+  danger: {
+    variant: "default",
+    extra: "bg-destructive text-destructive-foreground hover:bg-destructive/80",
+  },
+  warning: {
+    variant: "default",
+    extra: "bg-warning text-warning-foreground hover:bg-warning/80",
+  },
+};
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -37,24 +62,29 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ...rest
     },
     ref,
-  ) => (
-    <button
-      ref={ref}
-      className={cls(
-        styles.btn,
-        styles[variant],
-        styles[size],
-        fullWidth && styles.fullWidth,
-        loading && styles.loading,
-        className,
-      )}
-      disabled={disabled || loading}
-      {...rest}
-    >
-      {icon && <span className={styles.icon}>{icon}</span>}
-      <span>{children}</span>
-    </button>
-  ),
+  ) => {
+    const map = variantToRetro[variant];
+    return (
+      <RetroButton
+        ref={ref}
+        variant={map.variant}
+        size={size}
+        className={cn(
+          "justify-center gap-2",
+          fullWidth && "w-full",
+          loading && "opacity-70 cursor-wait",
+          map.extra,
+          className,
+        )}
+        disabled={disabled || loading}
+        aria-busy={loading || undefined}
+        {...rest}
+      >
+        {icon && <span className="inline-flex items-center">{icon}</span>}
+        <span>{children}</span>
+      </RetroButton>
+    );
+  },
 );
 
 Button.displayName = "Button";

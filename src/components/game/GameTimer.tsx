@@ -1,8 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
-import styles from "./GameTimer.module.css";
-import { formatTime, cls } from "@/lib/utils";
+import { formatTime, cn } from "@/lib/utils";
 
 interface GameTimerProps {
   seconds: number;
@@ -15,23 +13,33 @@ export function GameTimer({ seconds, maxSeconds, variant = "default" }: GameTime
   const warning = seconds <= 10;
   const pct = maxSeconds ? Math.max(0, Math.min(100, (seconds / maxSeconds) * 100)) : null;
 
+  const colorClass = critical
+    ? "bg-destructive text-destructive-foreground"
+    : warning
+      ? "bg-warning text-warning-foreground"
+      : "bg-card text-card-foreground";
+
   return (
-    <div className={cls(styles.wrap, variant === "bomb" && styles.bomb)}>
-      <motion.div
-        className={cls(
-          styles.display,
-          warning && styles.warning,
-          critical && styles.critical,
+    <div className={cn("flex flex-col items-stretch gap-2 w-full max-w-xs mx-auto", variant === "bomb" && "")}> 
+      <div
+        className={cn(
+          "flex items-center justify-center gap-2 border-2 border-border rounded px-4 py-3 font-mono font-bold text-3xl shadow-md",
+          colorClass,
+          critical && "animate-pulse",
         )}
-        animate={critical ? { scale: [1, 1.08, 1] } : { scale: 1 }}
-        transition={critical ? { duration: 0.6, repeat: Infinity } : { duration: 0.2 }}
       >
-        {variant === "bomb" && <span className={styles.bombIcon}>💣</span>}
+        {variant === "bomb" && <span className="text-2xl">💣</span>}
         <span>{formatTime(seconds)}</span>
-      </motion.div>
+      </div>
       {pct !== null && (
-        <div className={styles.track}>
-          <div className={styles.fill} style={{ width: `${pct}%` }} />
+        <div className="h-3 w-full border-2 border-border bg-card rounded overflow-hidden">
+          <div
+            className={cn(
+              "h-full transition-all",
+              critical ? "bg-destructive" : warning ? "bg-warning" : "bg-primary",
+            )}
+            style={{ width: `${pct}%` }}
+          />
         </div>
       )}
     </div>

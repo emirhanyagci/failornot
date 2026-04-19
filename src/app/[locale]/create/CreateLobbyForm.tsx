@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { ArrowLeft, Info, Rocket } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { Card } from "@/components/retroui/Card";
 import { useRouter } from "@/lib/i18n/routing";
-import { generateLobbyCode } from "@/lib/utils";
+import { generateLobbyCode, cn } from "@/lib/utils";
 import type { GameMode, LobbySettings } from "@/types/game";
-import styles from "./CreateLobbyForm.module.css";
 
 const CATEGORY_SLUGS = ["genel", "karisik", "oyun", "spor", "bilim", "tarih"] as const;
 const MODES: GameMode[] = ["normal", "sudden_death", "bomb"];
@@ -52,64 +51,79 @@ export function CreateLobbyForm() {
   };
 
   return (
-    <motion.div
-      className="page-container"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div className={styles.topBar}>
+    <div className="w-full max-w-md flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-3 mt-2">
         <Button variant="subtle" icon={<ArrowLeft size={18} />} onClick={() => router.back()}>
           {tCommon("back")}
         </Button>
-        <h2>{t("title")}</h2>
-        <div style={{ width: 48 }} />
+        <h2 className="font-head text-xl flex-1 text-center">{t("title")}</h2>
+        <div className="w-12" />
       </div>
 
-      <section className="glass-card">
-        <div className="section-title">{t("gameMode")}</div>
-        <div className={styles.modeList}>
-          {MODES.map((m) => (
-            <button
-              key={m}
-              className={`${styles.modeOption} ${mode === m ? styles.modeActive : ""}`}
-              onClick={() => setMode(m)}
-            >
-              <div className={styles.modeHeader}>
-                <span className={styles.radio} data-active={mode === m} />
-                <span className={styles.modeName}>{t(`modes.${m}`)}</span>
-                <Tooltip content={t(`modeDesc.${m}`)}>
-                  <Info size={16} className={styles.infoIcon} />
-                </Tooltip>
-              </div>
-              <p className={styles.modeDesc}>{t(`modeDesc.${m}`)}</p>
-            </button>
-          ))}
-        </div>
-      </section>
+      <Card className="w-full">
+        <Card.Content className="flex flex-col gap-3">
+          <SectionTitle>{t("gameMode")}</SectionTitle>
+          <div className="flex flex-col gap-2">
+            {MODES.map((m) => (
+              <button
+                key={m}
+                type="button"
+                className={cn(
+                  "text-left bg-card border-2 border-border rounded p-3 transition-all shadow-xs",
+                  "hover:translate-y-[1px] hover:shadow-none",
+                  mode === m && "bg-accent shadow-md",
+                )}
+                onClick={() => setMode(m)}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span
+                    className={cn(
+                      "w-4 h-4 rounded-full border-2 border-border shrink-0",
+                      mode === m && "bg-primary",
+                    )}
+                  />
+                  <span className="font-head flex-1">{t(`modes.${m}`)}</span>
+                  <Tooltip content={t(`modeDesc.${m}`)}>
+                    <Info size={16} className="text-muted-foreground shrink-0" />
+                  </Tooltip>
+                </div>
+                <p className="text-sm text-muted-foreground ml-6">{t(`modeDesc.${m}`)}</p>
+              </button>
+            ))}
+          </div>
+        </Card.Content>
+      </Card>
 
-      <section className="glass-card">
-        <div className="section-title">{t("category")}</div>
-        <div className={styles.chipGroup}>
-          {CATEGORY_SLUGS.map((slug) => (
-            <button
-              key={slug}
-              className={`${styles.chip} ${categorySlugs.includes(slug) ? styles.chipActive : ""}`}
-              onClick={() => toggleCategory(slug)}
-            >
-              {t(`categories.${slug}`)}
-            </button>
-          ))}
-        </div>
-      </section>
+      <Card className="w-full">
+        <Card.Content className="flex flex-col gap-3">
+          <SectionTitle>{t("category")}</SectionTitle>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORY_SLUGS.map((slug) => (
+              <button
+                key={slug}
+                type="button"
+                className={cn(
+                  "px-3 py-1.5 border-2 border-border rounded font-head text-sm transition-all shadow-xs",
+                  "hover:translate-y-[1px] hover:shadow-none",
+                  categorySlugs.includes(slug)
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-card text-card-foreground",
+                )}
+                onClick={() => toggleCategory(slug)}
+              >
+                {t(`categories.${slug}`)}
+              </button>
+            ))}
+          </div>
+        </Card.Content>
+      </Card>
 
       {mode !== "bomb" && (
-        <section className="glass-card">
-          <div className={styles.sliderBlock}>
-            <div className="row-between">
-              <span className="section-title" style={{ margin: 0 }}>
-                {t("roundTime")}
-              </span>
-              <span className={styles.sliderValue}>
+        <Card className="w-full">
+          <Card.Content className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <SectionTitle>{t("roundTime")}</SectionTitle>
+              <span className="font-mono font-bold">
                 {roundTime} {tCommon("seconds")}
               </span>
             </div>
@@ -120,20 +134,18 @@ export function CreateLobbyForm() {
               step={10}
               value={roundTime}
               onChange={(e) => setRoundTime(Number(e.target.value))}
-              className={styles.slider}
+              className="w-full accent-primary"
             />
-          </div>
-        </section>
+          </Card.Content>
+        </Card>
       )}
 
       {mode === "normal" && (
-        <section className="glass-card">
-          <div className={styles.sliderBlock}>
-            <div className="row-between">
-              <span className="section-title" style={{ margin: 0 }}>
-                {t("targetScore")}
-              </span>
-              <span className={styles.sliderValue}>
+        <Card className="w-full">
+          <Card.Content className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <SectionTitle>{t("targetScore")}</SectionTitle>
+              <span className="font-mono font-bold">
                 {targetScore} {tCommon("points")}
               </span>
             </div>
@@ -144,44 +156,69 @@ export function CreateLobbyForm() {
               step={5}
               value={targetScore}
               onChange={(e) => setTargetScore(Number(e.target.value))}
-              className={styles.slider}
+              className="w-full accent-primary"
             />
-          </div>
-        </section>
+          </Card.Content>
+        </Card>
       )}
 
-      <section className="glass-card">
-        <div className="section-title">{t("passLimit")}</div>
-        <div className={styles.segmented}>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button
-              key={n}
-              className={`${styles.segment} ${passLimit === n ? styles.segmentActive : ""}`}
-              onClick={() => setPassLimit(n)}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      </section>
+      <Card className="w-full">
+        <Card.Content className="flex flex-col gap-3">
+          <SectionTitle>{t("passLimit")}</SectionTitle>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                className={cn(
+                  "flex-1 py-2 border-2 border-border rounded font-mono font-bold transition-all shadow-xs",
+                  "hover:translate-y-[1px] hover:shadow-none",
+                  passLimit === n
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-card text-card-foreground",
+                )}
+                onClick={() => setPassLimit(n)}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </Card.Content>
+      </Card>
 
-      <section className="glass-card">
-        <div className="section-title">{t("lobbyType")}</div>
-        <div className={styles.toggleRow}>
-          <button
-            className={`${styles.toggleOption} ${!isPublic ? styles.toggleActive : ""}`}
-            onClick={() => setIsPublic(false)}
-          >
-            🔒 {t("private")}
-          </button>
-          <button
-            className={`${styles.toggleOption} ${isPublic ? styles.toggleActive : ""}`}
-            onClick={() => setIsPublic(true)}
-          >
-            🌐 {t("public")}
-          </button>
-        </div>
-      </section>
+      <Card className="w-full">
+        <Card.Content className="flex flex-col gap-3">
+          <SectionTitle>{t("lobbyType")}</SectionTitle>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={cn(
+                "flex-1 py-3 border-2 border-border rounded font-head transition-all shadow-xs",
+                "hover:translate-y-[1px] hover:shadow-none",
+                !isPublic
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-card text-card-foreground",
+              )}
+              onClick={() => setIsPublic(false)}
+            >
+              🔒 {t("private")}
+            </button>
+            <button
+              type="button"
+              className={cn(
+                "flex-1 py-3 border-2 border-border rounded font-head transition-all shadow-xs",
+                "hover:translate-y-[1px] hover:shadow-none",
+                isPublic
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-card text-card-foreground",
+              )}
+              onClick={() => setIsPublic(true)}
+            >
+              🌐 {t("public")}
+            </button>
+          </div>
+        </Card.Content>
+      </Card>
 
       <Button
         variant="primary"
@@ -192,6 +229,14 @@ export function CreateLobbyForm() {
       >
         {t("createButton")}
       </Button>
-    </motion.div>
+    </div>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="font-head text-xs uppercase tracking-wider text-muted-foreground">
+      {children}
+    </div>
   );
 }

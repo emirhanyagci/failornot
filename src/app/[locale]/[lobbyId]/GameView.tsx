@@ -1,6 +1,5 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
 import { Flag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ActionBar } from "@/components/game/ActionBar";
@@ -12,7 +11,6 @@ import { TurnIndicator } from "@/components/game/TurnIndicator";
 import { WordCard } from "@/components/game/WordCard";
 import { Button } from "@/components/ui/Button";
 import type { RoomConnection } from "@/features/game-engine/useRoomConnection";
-import styles from "./GameView.module.css";
 
 interface GameViewProps {
   room: RoomConnection;
@@ -36,7 +34,7 @@ export function GameView({ room }: GameViewProps) {
       ? "guesser"
       : "opponent";
 
-  const showCardContent = isDescriber || !isMyTeam; // describer + opponents see word for fouls
+  const showCardContent = isDescriber || !isMyTeam;
   const card = showCardContent ? revealedWord : null;
   const isHost = meId === game.hostId;
   const isBomb = game.mode === "bomb";
@@ -45,12 +43,8 @@ export function GameView({ room }: GameViewProps) {
   const timerValue = isBomb ? (bomb?.remaining ?? game.bombRemaining ?? 0) : game.timer;
 
   return (
-    <motion.div
-      className={styles.wrap}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
-      <header className={styles.header}>
+    <div className="w-full max-w-2xl flex flex-col items-center gap-4 pb-32 sm:pb-8">
+      <header className="w-full sticky top-0 z-10 py-2">
         <ScoreBoard
           teams={game.teams}
           currentTeam={turn?.team}
@@ -59,7 +53,7 @@ export function GameView({ room }: GameViewProps) {
         />
       </header>
 
-      <div className={styles.timerBlock}>
+      <div className="flex justify-center w-full">
         <GameTimer seconds={timerValue} maxSeconds={timerMax} variant={isBomb ? "bomb" : "default"} />
       </div>
 
@@ -67,23 +61,21 @@ export function GameView({ room }: GameViewProps) {
         <TurnIndicator team={turn.team} describer={describer} role={role} />
       )}
 
-      <div className={styles.cardArea}>
-        <AnimatePresence mode="wait">
-          <WordCard
-            key={(card?.id ?? "hidden") + String(turn?.team)}
-            card={card}
-            hidden={!showCardContent}
-            placeholderText={
-              role === "guesser" ? t("guessPrompt") : role === "opponent" ? t("opponentPrompt") : undefined
-            }
-            emphasize={isDescriber}
-          />
-        </AnimatePresence>
+      <div className="relative flex justify-center w-full min-h-[300px]">
+        <WordCard
+          key={(card?.id ?? "hidden") + String(turn?.team)}
+          card={card}
+          hidden={!showCardContent}
+          placeholderText={
+            role === "guesser" ? t("guessPrompt") : role === "opponent" ? t("opponentPrompt") : undefined
+          }
+          emphasize={isDescriber}
+        />
         <RoundEventFlash event={roundEventFlash} />
       </div>
 
       {turn && (
-        <div className={styles.bottomBlock}>
+        <div className="w-full flex flex-col items-center gap-2">
           {isDescriber ? (
             <ActionBar
               onCorrect={() => room.send({ type: "correct" })}
@@ -93,7 +85,7 @@ export function GameView({ room }: GameViewProps) {
               passLimit={game.settings.passLimit}
             />
           ) : role === "opponent" ? (
-            <div className={styles.foulBar}>
+            <div className="fixed sm:static bottom-0 left-0 right-0 px-4 py-3 sm:p-0 bg-card sm:bg-transparent border-t-2 sm:border-0 border-border z-20 sm:max-w-md sm:mx-auto sm:w-full" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
               <Button
                 variant="danger"
                 size="lg"
@@ -105,7 +97,9 @@ export function GameView({ room }: GameViewProps) {
               </Button>
             </div>
           ) : (
-            <div className={styles.waitingText}>{t("waitingPrompt")}</div>
+            <div className="text-muted-foreground font-head py-4 text-center">
+              {t("waitingPrompt")}
+            </div>
           )}
         </div>
       )}
@@ -118,6 +112,6 @@ export function GameView({ room }: GameViewProps) {
         onPlayAgain={() => room.send({ type: "play_again" })}
         onBackToLobby={() => room.send({ type: "return_to_lobby" })}
       />
-    </motion.div>
+    </div>
   );
 }
