@@ -2,7 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileJson, LogOut, PenLine, Plus, Search, Trash2, Upload } from "lucide-react";
+import {
+  Check,
+  FileJson,
+  Inbox,
+  LogOut,
+  PenLine,
+  Plus,
+  Search,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
@@ -19,7 +30,7 @@ interface Category {
   sort_order: number;
 }
 
-type Tab = "single" | "bulk" | "manage";
+type Tab = "single" | "bulk" | "manage" | "suggestions";
 
 const EMPTY_FORBIDDEN = ["", "", "", "", ""] as const;
 
@@ -30,6 +41,28 @@ export function AdminPanel() {
   const [catsLoading, setCatsLoading] = useState(true);
   const [catsError, setCatsError] = useState<string | null>(null);
   const [defaultCategory, setDefaultCategory] = useState<string>("");
+  const [pendingCount, setPendingCount] = useState<number>(0);
+
+  const refreshPendingCount = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/suggestions?status=pending&limit=1", {
+        cache: "no-store",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        total?: number;
+      };
+      if (res.ok && data.ok) {
+        setPendingCount(data.total ?? 0);
+      }
+    } catch {
+      // sessizce geç
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshPendingCount();
+  }, [refreshPendingCount]);
 
   const loadCategories = useCallback(async () => {
     setCatsLoading(true);
@@ -100,6 +133,14 @@ export function AdminPanel() {
         <TabButton active={tab === "manage"} onClick={() => setTab("manage")}>
           <Search size={16} /> Tum Kelimeler
         </TabButton>
+        <TabButton active={tab === "suggestions"} onClick={() => setTab("suggestions")}>
+          <Inbox size={16} /> Öneriler
+          {pendingCount > 0 && (
+            <span className="ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full border-2 border-border bg-destructive text-destructive-foreground text-[10px] leading-none font-head">
+              {pendingCount}
+            </span>
+          )}
+        </TabButton>
       </nav>
 
       {tab === "single" ? (
@@ -116,8 +157,13 @@ export function AdminPanel() {
           defaultCategory={defaultCategory}
           onCategoryChange={setDefaultCategory}
         />
-      ) : (
+      ) : tab === "manage" ? (
         <WordsManager categories={categories} />
+      ) : (
+        <SuggestionsManager
+          categories={categories}
+          onChanged={() => void refreshPendingCount()}
+        />
       )}
     </div>
   );
@@ -883,6 +929,463 @@ function EditWordModal({
   );
 }
 
+/* ---------------- Suggestions ---------------- */
+
+interface Suggestion {
+  id: string;
+  word: string;
+  forbidden_words: string[];
+  category_slug: string;
+  language: string;
+  submitted_by: string | null;
+  status: "pending" | "approved" | "rejected";
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+type SuggestionStatus = "pending" | "approved" | "rejected" | "all";
+
+function SuggestionsManager({
+  categories,
+  onChanged,
+}: {
+  categories: Category[];
+  onChanged: () => void;
+}) {
+  const [status, setStatus] = useState<SuggestionStatus>("pending");
+  const [items, setItems] = useState<Suggestion[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [approving, setApproving] = useState<Suggestion | null>(null);
+
+  const limit = 20;
+  const pageCount = Math.max(1, Math.ceil(total / limit));
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        status,
+        page: String(page),
+        limit: String(limit),
+      });
+      const res = await fetch(`/api/admin/suggestions?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        suggestions?: Suggestion[];
+        total?: number;
+      };
+      if (!res.ok || !data.ok) {
+        setError(friendlyError(data.error ?? "LIST_FAILED"));
+        return;
+      }
+      setItems(data.suggestions ?? []);
+      setTotal(data.total ?? 0);
+    } catch {
+      setError("Sunucuya ulasilamadi.");
+    } finally {
+      setLoading(false);
+    }
+  }, [status, page]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function reject(id: string) {
+    const ok = window.confirm("Bu öneriyi reddetmek istediğine emin misin?");
+    if (!ok) return;
+    const res = await fetch(`/api/admin/suggestions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "reject" }),
+    });
+    const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+    if (!res.ok || !data.ok) {
+      setError(friendlyError(data.error ?? "UPDATE_FAILED"));
+      return;
+    }
+    void load();
+    onChanged();
+  }
+
+  async function remove(id: string) {
+    const ok = window.confirm("Bu öneriyi kalıcı olarak silmek istediğine emin misin?");
+    if (!ok) return;
+    const res = await fetch(`/api/admin/suggestions/${id}`, { method: "DELETE" });
+    const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+    if (!res.ok || !data.ok) {
+      setError(friendlyError(data.error ?? "DELETE_FAILED"));
+      return;
+    }
+    if (items.length === 1 && page > 1) setPage((p) => p - 1);
+    else void load();
+    onChanged();
+  }
+
+  return (
+    <Card className="w-full">
+      <Card.Content className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-head text-xs uppercase tracking-wider text-muted-foreground mr-1">
+            Durum:
+          </span>
+          {(["pending", "approved", "rejected", "all"] as SuggestionStatus[]).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => {
+                setStatus(s);
+                setPage(1);
+              }}
+              className={cn(
+                "px-3 py-1.5 rounded border-2 border-border font-head text-sm transition-colors",
+                status === s
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+              )}
+            >
+              {s === "pending"
+                ? "Bekleyen"
+                : s === "approved"
+                  ? "Onaylanan"
+                  : s === "rejected"
+                    ? "Reddedilen"
+                    : "Tümü"}
+            </button>
+          ))}
+        </div>
+
+        {error && (
+          <div className="px-3 py-2 border-2 border-destructive bg-destructive/10 text-destructive font-head text-sm rounded">
+            {error}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {loading ? (
+            <div className="text-center py-6 border-2 border-dashed border-border rounded text-muted-foreground">
+              Yukleniyor...
+            </div>
+          ) : items.length === 0 ? (
+            <div className="text-center py-6 border-2 border-dashed border-border rounded text-muted-foreground">
+              {status === "pending"
+                ? "Bekleyen öneri yok."
+                : "Bu durumda öneri bulunamadı."}
+            </div>
+          ) : (
+            items.map((item) => {
+              const cat = categories.find((c) => c.slug === item.category_slug);
+              const filled = item.forbidden_words.filter((f) => f.trim()).length;
+              return (
+                <article
+                  key={item.id}
+                  className="border-2 border-border rounded p-3 bg-card flex flex-col gap-2"
+                >
+                  <div className="flex justify-between items-start gap-2 flex-wrap">
+                    <div>
+                      <div className="font-head text-base">{capitalizeWord(item.word)}</div>
+                      <div className="text-muted-foreground text-sm">
+                        {cat?.icon ? `${cat.icon} ` : ""}
+                        {cat?.name_tr ?? item.category_slug} · Dil: {item.language} ·{" "}
+                        {filled} yasak kelime ·{" "}
+                        <StatusBadge status={item.status} />
+                      </div>
+                      <div className="text-muted-foreground text-xs mt-1">
+                        {item.submitted_by ? `Öneren: ${item.submitted_by} · ` : ""}
+                        {new Date(item.created_at).toLocaleString("tr-TR")}
+                      </div>
+                    </div>
+                    <div className="inline-flex gap-1.5">
+                      {item.status === "pending" && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            icon={<Check size={14} />}
+                            onClick={() => setApproving(item)}
+                          >
+                            Onayla
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            icon={<X size={14} />}
+                            onClick={() => void reject(item.id)}
+                          >
+                            Reddet
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        icon={<Trash2 size={14} />}
+                        onClick={() => void remove(item.id)}
+                      >
+                        Sil
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {item.forbidden_words
+                      .filter((f) => f.trim())
+                      .map((f, i) => (
+                        <span
+                          key={`${f}-${i}`}
+                          className="border-2 border-border bg-accent text-accent-foreground rounded px-2 py-0.5 text-xs font-head"
+                        >
+                          {capitalizeWord(f)}
+                        </span>
+                      ))}
+                    {filled < 5 && item.status === "pending" && (
+                      <span className="border-2 border-dashed border-destructive text-destructive rounded px-2 py-0.5 text-xs font-head">
+                        {5 - filled} eksik — onaylarken doldur
+                      </span>
+                    )}
+                  </div>
+                </article>
+              );
+            })
+          )}
+        </div>
+
+        <div className="flex items-center justify-between gap-2 flex-col sm:flex-row text-muted-foreground text-sm">
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={page <= 1 || loading}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Onceki
+          </Button>
+          <span>
+            Sayfa {page} / {pageCount} · Toplam {total}
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={page >= pageCount || loading}
+            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+          >
+            Sonraki
+          </Button>
+        </div>
+
+        <ApproveSuggestionModal
+          open={!!approving}
+          suggestion={approving}
+          categories={categories}
+          onClose={() => setApproving(null)}
+          onApproved={() => {
+            setApproving(null);
+            void load();
+            onChanged();
+          }}
+        />
+      </Card.Content>
+    </Card>
+  );
+}
+
+function StatusBadge({ status }: { status: Suggestion["status"] }) {
+  const label =
+    status === "pending" ? "Bekliyor" : status === "approved" ? "Onaylı" : "Reddedildi";
+  const cls =
+    status === "pending"
+      ? "border-border bg-card text-foreground"
+      : status === "approved"
+        ? "border-success bg-success/10 text-foreground"
+        : "border-destructive bg-destructive/10 text-foreground";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center px-1.5 py-0.5 border-2 rounded text-[10px] font-head uppercase tracking-wider",
+        cls,
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+function ApproveSuggestionModal({
+  open,
+  suggestion,
+  categories,
+  onClose,
+  onApproved,
+}: {
+  open: boolean;
+  suggestion: Suggestion | null;
+  categories: Category[];
+  onClose: () => void;
+  onApproved: () => void;
+}) {
+  const [form, setForm] = useState({
+    word: "",
+    forbidden: [...EMPTY_FORBIDDEN] as string[],
+    categorySlug: "",
+    difficulty: 1,
+    language: "tr",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!suggestion) return;
+    const padded: string[] = [...EMPTY_FORBIDDEN];
+    suggestion.forbidden_words.slice(0, 5).forEach((f, i) => {
+      padded[i] = capitalizeWord(f);
+    });
+    const categoryExists = categories.some((c) => c.slug === suggestion.category_slug);
+    setForm({
+      word: capitalizeWord(suggestion.word),
+      forbidden: padded,
+      categorySlug: categoryExists
+        ? suggestion.category_slug
+        : (categories[0]?.slug ?? ""),
+      difficulty: 1,
+      language: suggestion.language || "tr",
+    });
+    setError(null);
+  }, [categories, suggestion]);
+
+  function setForbiddenAt(i: number, v: string) {
+    setForm((prev) => {
+      const next = [...prev.forbidden];
+      next[i] = v;
+      return { ...prev, forbidden: next };
+    });
+  }
+
+  async function approve() {
+    if (!suggestion) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/admin/suggestions/${suggestion.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "approve",
+          word: form.word.trim(),
+          forbidden: form.forbidden.map((f) => f.trim()),
+          categorySlug: form.categorySlug,
+          difficulty: form.difficulty,
+          language: form.language.trim() || "tr",
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        errors?: Array<{ index: number; reason: string }>;
+      };
+      if (!res.ok || !data.ok) {
+        const reason = data.errors?.[0]?.reason ?? data.error ?? "UPDATE_FAILED";
+        setError(friendlyError(reason));
+        return;
+      }
+      onApproved();
+    } catch {
+      setError("Sunucuya ulasilamadi.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const canSubmit =
+    !submitting &&
+    form.word.trim().length > 0 &&
+    form.forbidden.every((f) => f.trim().length > 0) &&
+    !!form.categorySlug;
+
+  return (
+    <Modal open={open} onClose={onClose} title="Öneriyi Onayla" wide>
+      {suggestion && (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">
+            Öneri <strong>{capitalizeWord(suggestion.word)}</strong> kelimesi için geldi.
+            Eksik yasak kelime varsa burada tamamla, sonra onayla.
+          </p>
+          <Input
+            label="Kelime"
+            value={form.word}
+            onChange={(e) => setForm((prev) => ({ ...prev, word: e.target.value }))}
+            maxLength={64}
+          />
+          <CategorySelect
+            categories={categories}
+            loading={false}
+            value={form.categorySlug}
+            onChange={(value) => setForm((prev) => ({ ...prev, categorySlug: value }))}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1.5">
+              <span className="font-head text-xs uppercase tracking-wider text-muted-foreground">
+                Zorluk
+              </span>
+              <select
+                className="px-3 py-2 border-2 border-border bg-card text-card-foreground rounded font-sans shadow-xs focus:outline-hidden focus:shadow-none"
+                value={String(form.difficulty)}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, difficulty: Number(e.target.value) || 1 }))
+                }
+              >
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+            </label>
+            <Input
+              label="Dil"
+              value={form.language}
+              onChange={(e) => setForm((prev) => ({ ...prev, language: e.target.value }))}
+              maxLength={8}
+            />
+          </div>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2">
+            {form.forbidden.map((v, i) => (
+              <Input
+                key={i}
+                label={`Yasakli ${i + 1}`}
+                value={v}
+                onChange={(e) => setForbiddenAt(i, e.target.value)}
+                maxLength={32}
+              />
+            ))}
+          </div>
+          {error && (
+            <div className="px-3 py-2 border-2 border-destructive bg-destructive/10 text-destructive font-head text-sm rounded">
+              {error}
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={onClose}>
+              Vazgec
+            </Button>
+            <Button
+              variant="primary"
+              icon={<Check size={16} />}
+              onClick={() => void approve()}
+              disabled={!canSubmit}
+              loading={submitting}
+            >
+              Onayla ve Ekle
+            </Button>
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 /* ---------------- Shared ---------------- */
 
 function FeedbackBox({
@@ -995,6 +1498,12 @@ function friendlyError(code: string): string {
       return "Kelime listesi yuklenemedi.";
     case "UPDATE_FAILED":
       return "Kelime guncellenemedi.";
+    case "SUGGESTION_NOT_FOUND":
+      return "Öneri bulunamadı.";
+    case "ALREADY_REVIEWED":
+      return "Bu öneri zaten işlenmiş.";
+    case "INVALID_ACTION":
+      return "Geçersiz işlem.";
     default:
       return code;
   }
