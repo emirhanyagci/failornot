@@ -40,7 +40,7 @@
     "modeDesc": {
       "normal": "Classic Taboo. Timer ends → opposing team's turn.",
       "sudden_death": "Correct +5s, foul −5s. Keep going until the timer dies!",
-      "bomb": "Guess in 30s, pass the bomb. Or it explodes!"
+      "bomb": "Describe to pass the bomb. If it explodes on the opponent you gain +1; fouls cost -1."
     },
     "category": "Category",
     "categories": {

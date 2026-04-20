@@ -40,7 +40,7 @@
     "modeDesc": {
       "normal": "Klasik Tabu: Süre dolunca sıra karşı takıma geçer.",
       "sudden_death": "Doğru bil +5sn, faul -5sn. Süre bitene kadar devam!",
-      "bomb": "30 saniyede bil, bomba karşıya geçsin. Bilemezsen patlar!"
+      "bomb": "Doğru anlat, bombayı rakibe at. Bomba rakipte patlarsa +1 puan; faul yaparsan -1 puan."
     },
     "category": "Kategori",
     "categories": {

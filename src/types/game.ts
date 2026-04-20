@@ -35,7 +35,6 @@ export interface TeamStats {
   score: number;
   correct: number;
   fouls: number;
-  lives?: number; // bomb mode
 }
 
 export interface GamePhase {

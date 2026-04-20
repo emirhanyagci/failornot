@@ -25,6 +25,12 @@ export function CreateLobbyForm() {
   const [passLimit, setPassLimit] = useState(3);
   const [isPublic, setIsPublic] = useState(false);
 
+  const handleModeChange = (m: GameMode) => {
+    setMode(m);
+    if (m === "bomb") setTargetScore((prev) => Math.min(Math.max(prev, 3), 10));
+    else if (m === "normal") setTargetScore((prev) => Math.max(prev, 10));
+  };
+
   const toggleCategory = (slug: string) => {
     setCategorySlugs((prev) => {
       if (prev.includes(slug)) {
@@ -73,7 +79,7 @@ export function CreateLobbyForm() {
                   "hover:translate-y-[1px] hover:shadow-none",
                   mode === m && "bg-accent shadow-md",
                 )}
-                onClick={() => setMode(m)}
+                onClick={() => handleModeChange(m)}
               >
                 <div className="flex items-center gap-2 mb-1">
                   <span
@@ -140,7 +146,7 @@ export function CreateLobbyForm() {
         </Card>
       )}
 
-      {mode === "normal" && (
+      {(mode === "normal" || mode === "bomb") && (
         <Card className="w-full">
           <Card.Content className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
@@ -151,9 +157,9 @@ export function CreateLobbyForm() {
             </div>
             <input
               type="range"
-              min={10}
-              max={100}
-              step={5}
+              min={mode === "bomb" ? 3 : 10}
+              max={mode === "bomb" ? 20 : 100}
+              step={mode === "bomb" ? 1 : 5}
               value={targetScore}
               onChange={(e) => setTargetScore(Number(e.target.value))}
               className="w-full accent-primary"

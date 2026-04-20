@@ -60,14 +60,12 @@ const DEFAULT_SETTINGS: LobbySettings = {
 const RECONNECT_GRACE_MS = 30_000;
 const BOMB_INITIAL = 30;
 const SUDDEN_DEATH_INITIAL = 45;
-const BOMB_STARTING_LIVES = 3;
 
-function emptyStats(mode: string): TeamStats {
+function emptyStats(_mode: string): TeamStats {
   return {
     score: 0,
     correct: 0,
     fouls: 0,
-    ...(mode === "bomb" ? { lives: BOMB_STARTING_LIVES } : {}),
   };
 }
 
@@ -521,13 +519,10 @@ export default class GameServer implements Party.Server {
 
     turn.roundResults.push({ type: "correct", word: turn.currentWord.word });
     this.state.teams[turn.team].correct += 1;
-    this.state.teams[turn.team].score += 1;
     this.broadcast({ type: "round_event", payload: { type: "correct", word: turn.currentWord.word } });
 
-    if (this.state.mode === "sudden_death") {
-      this.state.timer += 5;
-    }
     if (this.state.mode === "bomb") {
+      // Bomba modunda doğru anlatma puan KAZANDIRMAZ; sadece bomba rakibe geçer.
       const next: Team = turn.team === "A" ? "B" : "A";
       this.state.bombHolder = next;
       this.state.bombRemaining = BOMB_INITIAL;
@@ -535,6 +530,13 @@ export default class GameServer implements Party.Server {
       this.startTurn(next, BOMB_INITIAL);
       this.sendStateAll();
       return;
+    }
+
+    // Normal & Sudden Death: doğru bilmek +1 puan.
+    this.state.teams[turn.team].score += 1;
+
+    if (this.state.mode === "sudden_death") {
+      this.state.timer += 5;
     }
 
     if (this.checkGameOver()) return;
@@ -572,18 +574,10 @@ export default class GameServer implements Party.Server {
     this.broadcast({ type: "round_event", payload: { type: "foul", word: turn.currentWord.word } });
 
     if (this.state.mode === "bomb") {
-      // Bomba modunda faul: önce puandan düş, puan yoksa candan düş.
-      // Yeni kelime VERME — bomba karşı takıma geçer, süre 30sn'ye resetlenir.
-      if (stats.score > 0) {
-        stats.score -= 1;
-      } else {
-        stats.lives = Math.max(0, (stats.lives ?? BOMB_STARTING_LIVES) - 1);
-        if ((stats.lives ?? 0) <= 0) {
-          const winner: Team = turn.team === "A" ? "B" : "A";
-          this.endGame(winner);
-          return;
-        }
-      }
+      // Bomba modunda faul: yapan takım -1 puan alır (negatife düşebilir).
+      // Bomba karşı takıma geçer, süre 30sn'ye resetlenir.
+      stats.score -= 1;
+      if (this.checkGameOver()) return;
       const next: Team = turn.team === "A" ? "B" : "A";
       this.state.bombHolder = next;
       this.state.bombRemaining = BOMB_INITIAL;
@@ -641,33 +635,24 @@ export default class GameServer implements Party.Server {
     this.stopTimer();
     if (!this.state.turn || this.state.mode !== "bomb") return;
     const holder = this.state.bombHolder ?? this.state.turn.team;
-    const stats = this.state.teams[holder];
-    stats.lives = Math.max(0, (stats.lives ?? BOMB_STARTING_LIVES) - 1);
+    const opposer: Team = holder === "A" ? "B" : "A";
+    // Bomba patladığında: elinde patlayan takımın RAKİBİ +1 puan kazanır.
+    this.state.teams[opposer].score += 1;
     this.broadcast({ type: "round_event", payload: { type: "foul", word: "💣" } });
 
-    if ((stats.lives ?? 0) <= 0) {
-      const winner: Team = holder === "A" ? "B" : "A";
-      this.endGame(winner);
-      return;
-    }
-    // reset bomb, keep with same team
+    if (this.checkGameOver()) return;
+
+    // Sıra rakibe geçer: bomba karşı takıma verilir, süre 30sn'ye resetlenir,
+    // patlayan takımda anlatıcı döner.
+    this.state.bombHolder = opposer;
     this.state.bombRemaining = BOMB_INITIAL;
     this.rotateDescriber(holder);
-    this.startTurn(holder, BOMB_INITIAL);
+    this.startTurn(opposer, BOMB_INITIAL);
     this.sendStateAll();
   }
 
   private checkGameOver(): boolean {
-    if (this.state.mode === "bomb") {
-      const aDead = (this.state.teams.A.lives ?? 1) <= 0;
-      const bDead = (this.state.teams.B.lives ?? 1) <= 0;
-      if (aDead || bDead) {
-        this.endGame(aDead ? "B" : "A");
-        return true;
-      }
-      return false;
-    }
-    if (this.state.mode === "normal") {
+    if (this.state.mode === "normal" || this.state.mode === "bomb") {
       const { targetScore } = this.state.settings;
       const aWin = this.state.teams.A.score >= targetScore;
       const bWin = this.state.teams.B.score >= targetScore;

@@ -48,8 +48,11 @@ export function GameView({ room }: GameViewProps) {
         <ScoreBoard
           teams={game.teams}
           currentTeam={turn?.team}
-          mode={game.mode}
-          targetScore={game.mode === "normal" ? game.settings.targetScore : undefined}
+          targetScore={
+            game.mode === "normal" || game.mode === "bomb"
+              ? game.settings.targetScore
+              : undefined
+          }
         />
       </header>
 
