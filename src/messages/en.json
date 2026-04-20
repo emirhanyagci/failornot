@@ -10,7 +10,9 @@
     "confirm": "Confirm",
     "submit": "Submit",
     "seconds": "seconds",
-    "points": "points"
+    "points": "points",
+    "refresh": "Refresh",
+    "retry": "Retry"
   },
   "home": {
     "title": "Faul or Not",
@@ -70,7 +72,10 @@
     "playerCount": "{count}/{max} Players",
     "waitingForHost": "Waiting for host to start...",
     "settingsSummary": "{mode} • {categories} • {time}s",
-    "leaveLobby": "Leave Lobby"
+    "leaveLobby": "Leave Lobby",
+    "invite": "Invite",
+    "inviteCopied": "Invite link copied",
+    "inviteCopyFailed": "Couldn't copy link"
   },
   "join": {
     "title": "Join by Code",
@@ -78,10 +83,37 @@
     "joinButton": "Join",
     "invalidCode": "Invalid lobby code"
   },
+  "invite": {
+    "title": "Joining Lobby",
+    "joining": "Joining lobby...",
+    "code": "Code: {code}",
+    "enterUsernameTitle": "Pick a username to join",
+    "enterUsernameNote": "You need a username before joining the lobby.",
+    "joinLobby": "Join Lobby",
+    "backHome": "Back to menu",
+    "errors": {
+      "lobbyFull": "Lobby is full",
+      "gameInProgress": "The game has already started",
+      "notFound": "Lobby not found",
+      "generic": "Couldn't join the lobby"
+    }
+  },
   "browse": {
     "title": "Browse Lobbies",
-    "empty": "No public lobbies yet.",
-    "note": "Note: Public lobbies coming soon. For now, ask a friend for a code."
+    "empty": "No active lobbies yet.",
+    "note": "Create a lobby or ask a friend for a code to play.",
+    "loading": "Loading lobbies...",
+    "loadError": "Couldn't load lobbies. Try again.",
+    "public": "Public",
+    "private": "Private",
+    "locked": "Locked",
+    "joinButton": "Join",
+    "playersLabel": "{count}/{max} players",
+    "hostLabel": "Host: {name}",
+    "privateJoinTitle": "Private Lobby",
+    "privateJoinNote": "Enter the code the host shared with you.",
+    "invalidCode": "Code must be at least 3 characters",
+    "hiddenCode": "••••••"
   },
   "game": {
     "turnOf": "{team}'s turn",

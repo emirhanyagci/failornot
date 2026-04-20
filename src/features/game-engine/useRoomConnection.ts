@@ -24,6 +24,11 @@ export interface RoundEventFlash {
   data: RoundEvent;
 }
 
+export interface RoomError {
+  code: string;
+  message: string;
+}
+
 export interface RoomConnection {
   connected: boolean;
   lobby: LobbyState | null;
@@ -33,6 +38,7 @@ export interface RoomConnection {
   lastTimer: number | null;
   bomb: { holder: Team; remaining: number } | null;
   roundEventFlash: RoundEventFlash | null;
+  lastError: RoomError | null;
   send: (msg: ClientMessage) => void;
 }
 
@@ -45,6 +51,7 @@ export function useRoomConnection({ roomId, autoJoin = true }: UseRoomConnection
   const [lastTimer, setLastTimer] = useState<number | null>(null);
   const [bomb, setBomb] = useState<{ holder: Team; remaining: number } | null>(null);
   const [roundEventFlash, setRoundEventFlash] = useState<RoundEventFlash | null>(null);
+  const [lastError, setLastError] = useState<RoomError | null>(null);
   const socketRef = useRef<PartySocket | null>(null);
   const flashCounterRef = useRef(0);
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -63,17 +70,16 @@ export function useRoomConnection({ roomId, autoJoin = true }: UseRoomConnection
 
     const handleOpen = () => {
       setConnected(true);
+      if (!autoJoin || !username) return;
       const secret = ensureSecret();
-      if (autoJoin && username) {
-        const joinMsg: ClientMessage = {
-          type: "join",
-          payload: { username, avatarId, secret },
-        };
-        socket.send(JSON.stringify(joinMsg));
-      } else if (secret) {
-        const rejoin: ClientMessage = { type: "rejoin", payload: { secret } };
-        socket.send(JSON.stringify(rejoin));
-      }
+      // The server uses `secret` to reattach an existing player (same
+      // browser reconnecting / refreshing) instead of creating a duplicate,
+      // so a single `join` covers both fresh joins and reconnects.
+      const joinMsg: ClientMessage = {
+        type: "join",
+        payload: { username, avatarId, secret },
+      };
+      socket.send(JSON.stringify(joinMsg));
     };
 
     const handleMessage = (evt: MessageEvent) => {
@@ -92,10 +98,12 @@ export function useRoomConnection({ roomId, autoJoin = true }: UseRoomConnection
           setGame(null);
           setRevealedWord(null);
           setBomb(null);
+          setLastError(null);
           break;
         case "game_state":
           setGame(msg.payload);
           setLobby(null);
+          setLastError(null);
           break;
         case "word_reveal":
           setRevealedWord(msg.payload);
@@ -124,6 +132,7 @@ export function useRoomConnection({ roomId, autoJoin = true }: UseRoomConnection
           // game_state also updates; modal handles it
           break;
         case "error":
+          setLastError({ code: msg.payload.code, message: msg.payload.message });
           toast.error(msg.payload.message);
           break;
         case "player_joined":
@@ -179,6 +188,7 @@ export function useRoomConnection({ roomId, autoJoin = true }: UseRoomConnection
     lastTimer,
     bomb,
     roundEventFlash,
+    lastError,
     send,
   };
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowLeft, Play, Shuffle, RefreshCw } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { ArrowLeft, Link2, Play, Shuffle, RefreshCw } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { LobbyCodeDisplay } from "@/components/lobby/LobbyCodeDisplay";
 import { PlayerList } from "@/components/lobby/PlayerList";
@@ -19,10 +20,22 @@ export function LobbyWaitingRoom({ room, lobbyId }: LobbyWaitingRoomProps) {
   const t = useTranslations("lobby");
   const tCreate = useTranslations("create");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const router = useRouter();
 
   const { lobby, meId } = room;
   if (!lobby) return null;
+
+  const copyInviteLink = async () => {
+    if (typeof window === "undefined") return;
+    const url = `${window.location.origin}/${locale}/join/${lobbyId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success(t("inviteCopied"));
+    } catch {
+      toast.error(t("inviteCopyFailed"));
+    }
+  };
 
   const isHost = meId === lobby.hostId;
   const teamA = lobby.players.filter((p) => p.team === "A" && p.status === "connected");
@@ -49,6 +62,14 @@ export function LobbyWaitingRoom({ room, lobbyId }: LobbyWaitingRoomProps) {
 
       <div className="flex flex-col items-center gap-3">
         <LobbyCodeDisplay code={lobbyId} label={t("codeLabel")} />
+        <Button
+          variant="accent"
+          size="sm"
+          icon={<Link2 size={16} />}
+          onClick={copyInviteLink}
+        >
+          {t("invite")}
+        </Button>
         <div className="text-sm text-center text-muted-foreground">
           {tCreate(`modes.${lobby.settings.mode}`)} •{" "}
           {lobby.settings.categorySlugs.map((s) => tCreate(`categories.${s}`)).join(", ")} •{" "}

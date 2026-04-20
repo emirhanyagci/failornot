@@ -10,7 +10,9 @@
     "confirm": "Onayla",
     "submit": "Gönder",
     "seconds": "saniye",
-    "points": "puan"
+    "points": "puan",
+    "refresh": "Yenile",
+    "retry": "Tekrar dene"
   },
   "home": {
     "title": "Faul or Not",
@@ -70,7 +72,10 @@
     "playerCount": "{count}/{max} Oyuncu",
     "waitingForHost": "Lobi sahibi başlatmayı bekliyor...",
     "settingsSummary": "{mode} • {categories} • {time}sn",
-    "leaveLobby": "Lobiden Çık"
+    "leaveLobby": "Lobiden Çık",
+    "invite": "Davet",
+    "inviteCopied": "Davet linki kopyalandı",
+    "inviteCopyFailed": "Link kopyalanamadı"
   },
   "join": {
     "title": "Koda Katıl",
@@ -78,10 +83,37 @@
     "joinButton": "Katıl",
     "invalidCode": "Geçersiz lobi kodu"
   },
+  "invite": {
+    "title": "Lobiye Katılınıyor",
+    "joining": "Lobiye katılınıyor...",
+    "code": "Kod: {code}",
+    "enterUsernameTitle": "Katılmak için bir kullanıcı adı seç",
+    "enterUsernameNote": "Lobiye katılmak için önce kullanıcı adı gerekli.",
+    "joinLobby": "Lobiye Katıl",
+    "backHome": "Ana menüye dön",
+    "errors": {
+      "lobbyFull": "Lobi dolu",
+      "gameInProgress": "Oyun zaten başladı",
+      "notFound": "Lobi bulunamadı",
+      "generic": "Lobiye katılınamadı"
+    }
+  },
   "browse": {
     "title": "Lobi Listesi",
-    "empty": "Henüz herkese açık lobi yok.",
-    "note": "Not: Herkese açık lobiler yakında eklenecek. Şimdilik arkadaşından kod al."
+    "empty": "Henüz aktif lobi yok.",
+    "note": "Yeni lobi oluştur ya da arkadaşından kod al.",
+    "loading": "Lobiler yükleniyor...",
+    "loadError": "Lobiler yüklenemedi. Tekrar dene.",
+    "public": "Herkese Açık",
+    "private": "Özel",
+    "locked": "Kilitli",
+    "joinButton": "Katıl",
+    "playersLabel": "{count}/{max} oyuncu",
+    "hostLabel": "Sahip: {name}",
+    "privateJoinTitle": "Özel Lobi",
+    "privateJoinNote": "Lobi sahibinin paylaştığı kodu gir.",
+    "invalidCode": "Kod en az 3 karakter olmalı",
+    "hiddenCode": "••••••"
   },
   "game": {
     "turnOf": "{team} sırası",

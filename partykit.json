@@ -2,6 +2,9 @@
   "$schema": "https://www.partykit.io/schema.json",
   "name": "faulornot-game",
   "main": "party/index.ts",
+  "parties": {
+    "lobbies": "party/lobbies.ts"
+  },
   "compatibilityDate": "2024-09-01",
   "vars": {
     "APP_URL": "https://failornot-irkv.vercel.app"

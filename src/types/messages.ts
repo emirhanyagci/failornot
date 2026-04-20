@@ -10,7 +10,6 @@ import type {
 
 export type ClientMessage =
   | { type: "join"; payload: { username: string; avatarId: string; secret: string } }
-  | { type: "rejoin"; payload: { secret: string } }
   | { type: "leave" }
   | { type: "update_settings"; payload: Partial<LobbySettings> }
   | { type: "assign_team"; payload: { playerId: string; team: Team | null } }

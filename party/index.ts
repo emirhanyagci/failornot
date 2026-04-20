@@ -113,8 +113,6 @@ export default class GameServer implements Party.Server {
     switch (msg.type) {
       case "join":
         return this.handleJoin(sender, msg.payload);
-      case "rejoin":
-        return this.handleRejoin(sender, msg.payload);
       case "leave":
         return this.handleLeave(sender);
       case "update_settings":
@@ -162,7 +160,7 @@ export default class GameServer implements Party.Server {
     this.disconnectTimers.set(playerId, timer);
   }
 
-  // ---------- Join / Rejoin ----------
+  // ---------- Join / Reattach ----------
 
   private handleJoin(
     conn: Party.Connection,
@@ -171,6 +169,18 @@ export default class GameServer implements Party.Server {
     const username = (payload.username || "").trim().slice(0, 16);
     const avatarId = payload.avatarId || "avatar-01";
     if (!username) return this.sendError(conn, "EMPTY_USERNAME", "Kullanıcı adı gerekli");
+
+    // If a player with this secret already exists (same browser reconnecting
+    // within the grace window or even after a page reload), treat this as a
+    // rejoin instead of creating a duplicate player. This also allows the
+    // original player to come back mid-game.
+    if (payload.secret) {
+      const existing = this.state.players.find((p) => p.secret === payload.secret);
+      if (existing) {
+        this.reattachPlayer(conn, existing, { username, avatarId });
+        return;
+      }
+    }
 
     if (this.state.phase !== "lobby") {
       return this.sendError(conn, "GAME_IN_PROGRESS", "Oyun devam ediyor");
@@ -206,19 +216,55 @@ export default class GameServer implements Party.Server {
     this.sendStateAll();
   }
 
-  private handleRejoin(conn: Party.Connection, payload: { secret: string }) {
-    const player = this.state.players.find((p) => p.secret === payload.secret);
-    if (!player) {
-      return this.sendError(conn, "NOT_FOUND", "Oyuncu bulunamadı");
-    }
-    const pendingTimer = this.disconnectTimers.get(player.id);
+  /**
+   * Reattach a connection to an already-existing player (same `secret`).
+   * Cancels any pending disconnect cleanup, marks the player connected,
+   * remaps the conn.id, and — while still in lobby — lets them refresh
+   * their username/avatar from the latest local state.
+   */
+  private reattachPlayer(
+    conn: Party.Connection,
+    existing: Player,
+    opts?: { username?: string; avatarId?: string },
+  ) {
+    const pendingTimer = this.disconnectTimers.get(existing.id);
     if (pendingTimer) {
       clearTimeout(pendingTimer);
-      this.disconnectTimers.delete(player.id);
+      this.disconnectTimers.delete(existing.id);
     }
-    player.status = "connected";
-    this.connToPlayer.set(conn.id, player.id);
-    conn.send(JSON.stringify({ type: "you_are", payload: { playerId: player.id } } satisfies ServerMessage));
+
+    // Drop any stale conn -> player mappings for this player before remapping.
+    for (const [cid, pid] of this.connToPlayer) {
+      if (pid === existing.id && cid !== conn.id) {
+        this.connToPlayer.delete(cid);
+      }
+    }
+
+    existing.status = "connected";
+
+    if (this.state.phase === "lobby") {
+      const nextName = (opts?.username || "").trim().slice(0, 16);
+      if (nextName && nextName !== existing.username) {
+        let finalName = nextName;
+        let suffix = 1;
+        while (
+          this.state.players.some((p) => p.id !== existing.id && p.username === finalName)
+        ) {
+          suffix++;
+          finalName = `${nextName}${suffix}`;
+        }
+        existing.username = finalName;
+      }
+      if (opts?.avatarId) existing.avatarId = opts.avatarId;
+    }
+
+    this.connToPlayer.set(conn.id, existing.id);
+    conn.send(
+      JSON.stringify({
+        type: "you_are",
+        payload: { playerId: existing.id },
+      } satisfies ServerMessage),
+    );
     this.sendStateAll();
   }
 
@@ -687,6 +733,70 @@ export default class GameServer implements Party.Server {
     for (const conn of this.room.getConnections()) {
       this.sendState(conn);
     }
+    this.pushRegistry();
+  }
+
+  /**
+   * Notify the `lobbies` registry party about this room's latest meta,
+   * so the public browse page can list it. Fire-and-forget — failures
+   * must not break the game loop.
+   */
+  private pushRegistry(removed = false) {
+    try {
+      const parties = this.room.context?.parties;
+      const stub = parties?.lobbies?.get("index");
+      if (!stub) {
+        console.warn("[lobbies] registry party stub unavailable");
+        return;
+      }
+
+      const connectedPlayers = this.state.players.filter(
+        (p) => p.status === "connected",
+      );
+
+      const body =
+        removed || connectedPlayers.length === 0
+          ? { type: "remove", code: this.room.id }
+          : {
+              type: "upsert",
+              entry: {
+                code: this.room.id,
+                isPublic: this.state.settings.isPublic,
+                mode: this.state.settings.mode,
+                categorySlugs: this.state.settings.categorySlugs,
+                playerCount: connectedPlayers.length,
+                maxPlayers: this.state.settings.maxPlayers,
+                hostName:
+                  this.state.players.find((p) => p.id === this.state.hostId)
+                    ?.username ?? "",
+                phase: this.state.phase,
+              },
+            };
+
+      // Durable Object / PartyKit stubs require a Request with a URL.
+      const req = new Request("https://party-internal/parties/lobbies/index", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      void stub
+        .fetch(req)
+        .then(async (res) => {
+          if (!res.ok) {
+            console.warn(
+              "[lobbies] registry push failed",
+              res.status,
+              await res.text().catch(() => ""),
+            );
+          }
+        })
+        .catch((err) => {
+          console.warn("[lobbies] registry push errored", err);
+        });
+    } catch (err) {
+      console.warn("[lobbies] pushRegistry threw", err);
+    }
   }
 
   private sendState(conn: Party.Connection) {
@@ -725,6 +835,7 @@ export default class GameServer implements Party.Server {
     this.stopTimer();
     for (const t of this.disconnectTimers.values()) clearTimeout(t);
     this.disconnectTimers.clear();
+    this.pushRegistry(true);
     this.state = {
       phase: "lobby",
       mode: DEFAULT_SETTINGS.mode,

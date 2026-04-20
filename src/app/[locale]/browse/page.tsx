@@ -1,4 +1,4 @@
-import { setRequestLocale, getTranslations } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import { BrowseLobbies } from "./BrowseLobbies";
 
 export default async function BrowsePage({
@@ -8,6 +8,5 @@ export default async function BrowsePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("browse");
-  return <BrowseLobbies title={t("title")} empty={t("empty")} note={t("note")} />;
+  return <BrowseLobbies />;
 }
