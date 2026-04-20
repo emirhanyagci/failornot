@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { locales, type Locale } from "@/lib/i18n/config";
 import { Background } from "@/components/layout/Background";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { Toaster } from "@/components/retroui/Sonner";
 import "@/app/globals.css";
 
@@ -55,6 +56,7 @@ export default async function LocaleLayout({
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Background />
+          <LanguageSwitcher />
           <main className="min-h-screen flex flex-col items-center px-4 py-6 sm:py-8">
             {children}
           </main>
