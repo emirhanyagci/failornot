@@ -14,35 +14,58 @@ import type {
 import { pickDeck, shuffle } from "./words";
 
 /**
- * PartyKit Cloudflare Workers'ta çalışıyor.
- * `fetch()` globally mevcut; Next.js API'den merged deck'i çekiyoruz.
- * APP_URL:
- *   - partykit.json > vars > APP_URL
- *   - veya `partykit env add APP_URL ...` ile prod'a verilebilir
- *   - yoksa localhost:3000
+ * Next.js API'den Supabase destekli deck'i çekiyoruz.
+ *
+ * Üretim URL'i hem derleme zamanında hem de `env` üzerinden geliyor:
+ *   - `PROD_APP_URL`: kodun içine gömülü prod fallback (partykit.json `vars`
+ *     veya `partykit env add` kullanılabilir olmasa bile çalışır).
+ *   - `env.APP_URL`: `partykit.json > vars > APP_URL` ya da
+ *     `partykit env add APP_URL ...` ile override edilebilir.
+ *
+ * Yayın hattı: env > gömülü prod URL > localhost (sadece dev için).
  */
+const PROD_APP_URL = "https://failornot-irkv.vercel.app";
+
 function getAppUrl(env: Record<string, unknown>): string {
   const raw = typeof env.APP_URL === "string" ? (env.APP_URL as string) : "";
   const trimmed = raw.trim().replace(/\/$/, "");
-  return trimmed || "http://localhost:3000";
+  if (trimmed) return trimmed;
+  if (PROD_APP_URL) return PROD_APP_URL;
+  return "http://localhost:3000";
 }
 
 async function fetchDeckFromApi(
   env: Record<string, unknown>,
   slugs: string[],
 ): Promise<WordCard[] | null> {
+  const base = getAppUrl(env);
+  const qs = slugs.length ? `?slugs=${encodeURIComponent(slugs.join(","))}` : "";
+  const url = `${base}/api/deck${qs}`;
   try {
-    const base = getAppUrl(env);
-    const qs = slugs.length ? `?slugs=${encodeURIComponent(slugs.join(","))}` : "";
-    const res = await fetch(`${base}/api/deck${qs}`, {
+    const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.warn(
+        `[deck] fetch failed status=${res.status} url=${url} body=${body.slice(0, 200)}`,
+      );
+      return null;
+    }
     const json = (await res.json()) as { cards?: WordCard[] };
-    if (!json || !Array.isArray(json.cards) || json.cards.length === 0) return null;
+    if (!json || !Array.isArray(json.cards) || json.cards.length === 0) {
+      console.warn(
+        `[deck] empty response url=${url} cards=${json?.cards?.length ?? "n/a"}`,
+      );
+      return null;
+    }
+    console.log(
+      `[deck] fetched ${json.cards.length} cards from ${url}`,
+    );
     return json.cards;
-  } catch {
+  } catch (err) {
+    console.warn(`[deck] fetch threw url=${url} err=${(err as Error)?.message ?? err}`);
     return null;
   }
 }
