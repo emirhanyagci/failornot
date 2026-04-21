@@ -61,6 +61,25 @@ const RECONNECT_GRACE_MS = 30_000;
 const BOMB_INITIAL = 30;
 const SUDDEN_DEATH_INITIAL = 45;
 
+function normalizeWord(value: string): string {
+  return value
+    .trim()
+    .toLocaleLowerCase("tr")
+    .replace(/\s+/g, " ");
+}
+
+function uniqueDeck(cards: WordCard[]): WordCard[] {
+  const seen = new Set<string>();
+  const out: WordCard[] = [];
+  for (const card of cards) {
+    const key = normalizeWord(card.word);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(card);
+  }
+  return out;
+}
+
 function emptyStats(_mode: string): TeamStats {
   return {
     score: 0,
@@ -89,7 +108,6 @@ export default class GameServer implements Party.Server {
   };
 
   deck: WordCard[] = [];
-  deckIndex = 0;
   timerInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(readonly room: Party.Room) {}
@@ -398,8 +416,7 @@ export default class GameServer implements Party.Server {
       this.state.settings.categorySlugs,
     );
     const base = remote && remote.length > 0 ? remote : pickDeck(this.state.settings.categorySlugs);
-    this.deck = shuffle(base);
-    this.deckIndex = 0;
+    this.deck = shuffle(uniqueDeck(base));
 
     const startingTeam: Team = Math.random() < 0.5 ? "A" : "B";
 
@@ -468,11 +485,7 @@ export default class GameServer implements Party.Server {
 
   private drawCard(): WordCard | null {
     if (this.deck.length === 0) return null;
-    if (this.deckIndex >= this.deck.length) {
-      this.deck = shuffle(this.deck);
-      this.deckIndex = 0;
-    }
-    return this.deck[this.deckIndex++];
+    return this.deck.shift() ?? null;
   }
 
   private runTimer() {
@@ -553,6 +566,8 @@ export default class GameServer implements Party.Server {
     turn.remainingPasses -= 1;
     turn.roundResults.push({ type: "pass", word: turn.currentWord.word });
     this.broadcast({ type: "round_event", payload: { type: "pass", word: turn.currentWord.word } });
+    // Pas geçilen kelimeyi tekrar etmeyecek şekilde kuyruğun sonuna at.
+    this.deck.push(turn.currentWord);
     this.advanceWord();
   }
 
@@ -604,6 +619,10 @@ export default class GameServer implements Party.Server {
   private advanceWord() {
     if (!this.state.turn) return;
     this.state.turn.currentWord = this.drawCard();
+    if (!this.state.turn.currentWord) {
+      this.endTurn();
+      return;
+    }
     this.revealWordToTeam(this.state.turn.team, this.state.turn.currentWord);
     this.sendStateAll();
   }
