@@ -43,6 +43,7 @@
       "bomb": "Describe to pass the bomb. If it explodes on the opponent you gain +1; fouls cost -1."
     },
     "category": "Category",
+    "bombCategoryNote": "Bomb mode always uses the full shuffled pool of all categories.",
     "categories": {
       "genel": "General Knowledge",
       "karisik": "Mixed",

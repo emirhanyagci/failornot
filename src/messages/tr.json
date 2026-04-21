@@ -43,6 +43,7 @@
       "bomb": "Doğru anlat, bombayı rakibe at. Bomba rakipte patlarsa +1 puan; faul yaparsan -1 puan."
     },
     "category": "Kategori",
+    "bombCategoryNote": "Bomba modunda tüm kategoriler karıştırılarak kullanılır.",
     "categories": {
       "genel": "Genel Kültür",
       "karisik": "Karışık",

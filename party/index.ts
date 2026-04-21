@@ -108,6 +108,9 @@ export default class GameServer implements Party.Server {
   };
 
   deck: WordCard[] = [];
+  // Deste tükendiğinde karıştırıp yeniden doldurmak için kelime havuzu.
+  // Özellikle bomba modunda bir oyun çok uzun sürebilir; kelime asla bitmesin.
+  deckPool: WordCard[] = [];
   timerInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(readonly room: Party.Room) {}
@@ -409,14 +412,17 @@ export default class GameServer implements Party.Server {
     };
     this.state.turnIndex = { A: 0, B: 0 };
 
+    // Bomba modu: kategori seçimi önemli değil — kullanıcının seçtiği
+    // ya da lobby defaulttaki değerden bağımsız olarak her zaman
+    // Supabase'deki tüm kelime havuzunu karıştırıp kullanıyoruz.
+    const deckSlugs = mode === "bomb" ? ["karisik"] : this.state.settings.categorySlugs;
+
     // Admin UI'dan Supabase'e eklenen kelimeler dahil edilmiş deck'i
     // Next.js API'den çekiyoruz. Ulaşılamazsa statik kartlara fallback.
-    const remote = await fetchDeckFromApi(
-      this.room.env,
-      this.state.settings.categorySlugs,
-    );
-    const base = remote && remote.length > 0 ? remote : pickDeck(this.state.settings.categorySlugs);
-    this.deck = shuffle(uniqueDeck(base));
+    const remote = await fetchDeckFromApi(this.room.env, deckSlugs);
+    const base = remote && remote.length > 0 ? remote : pickDeck(deckSlugs);
+    this.deckPool = uniqueDeck(base);
+    this.deck = shuffle(this.deckPool);
 
     const startingTeam: Team = Math.random() < 0.5 ? "A" : "B";
 
@@ -484,7 +490,12 @@ export default class GameServer implements Party.Server {
   }
 
   private drawCard(): WordCard | null {
-    if (this.deck.length === 0) return null;
+    if (this.deck.length === 0) {
+      // Deste tükendi — havuzdan yeniden karıştırıp doldur.
+      // Bomba modunda bir maç çok uzun sürerse bile kelime bitmesin.
+      if (this.deckPool.length === 0) return null;
+      this.deck = shuffle(this.deckPool);
+    }
     return this.deck.shift() ?? null;
   }
 

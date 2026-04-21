@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Info, Rocket } from "lucide-react";
+import { ArrowLeft, Info, Rocket, Shuffle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -25,6 +25,11 @@ export function CreateLobbyForm() {
   const [passLimit, setPassLimit] = useState(3);
   const [isPublic, setIsPublic] = useState(false);
 
+  // Bomba modunda tüm kelime havuzu (karışık) kullanılır; kategori seçimi
+  // anlamsız olduğu için UI'dan gizlenir ve settings'te sabitlenir.
+  const isBomb = mode === "bomb";
+  const effectiveCategorySlugs = isBomb ? ["karisik"] : categorySlugs;
+
   const handleModeChange = (m: GameMode) => {
     setMode(m);
     if (m === "bomb") setTargetScore((prev) => Math.min(Math.max(prev, 3), 10));
@@ -44,7 +49,7 @@ export function CreateLobbyForm() {
     const code = generateLobbyCode();
     const settings: LobbySettings = {
       mode,
-      categorySlugs,
+      categorySlugs: effectiveCategorySlugs,
       roundTime,
       targetScore,
       passLimit,
@@ -103,24 +108,31 @@ export function CreateLobbyForm() {
       <Card className="w-full">
         <Card.Content className="flex flex-col gap-3">
           <SectionTitle>{t("category")}</SectionTitle>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORY_SLUGS.map((slug) => (
-              <button
-                key={slug}
-                type="button"
-                className={cn(
-                  "px-3 py-1.5 border-2 border-border rounded font-head text-sm transition-all shadow-xs",
-                  "hover:translate-y-[1px] hover:shadow-none",
-                  categorySlugs.includes(slug)
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "bg-card text-card-foreground",
-                )}
-                onClick={() => toggleCategory(slug)}
-              >
-                {t(`categories.${slug}`)}
-              </button>
-            ))}
-          </div>
+          {isBomb ? (
+            <div className="flex items-center gap-2 rounded border-2 border-border bg-accent/50 p-3 text-sm">
+              <Shuffle size={18} className="shrink-0" />
+              <span>{t("bombCategoryNote")}</span>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {CATEGORY_SLUGS.map((slug) => (
+                <button
+                  key={slug}
+                  type="button"
+                  className={cn(
+                    "px-3 py-1.5 border-2 border-border rounded font-head text-sm transition-all shadow-xs",
+                    "hover:translate-y-[1px] hover:shadow-none",
+                    categorySlugs.includes(slug)
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "bg-card text-card-foreground",
+                  )}
+                  onClick={() => toggleCategory(slug)}
+                >
+                  {t(`categories.${slug}`)}
+                </button>
+              ))}
+            </div>
+          )}
         </Card.Content>
       </Card>
 

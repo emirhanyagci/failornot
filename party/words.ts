@@ -32,8 +32,23 @@ export function pickDeck(categorySlugs: string[]): WordCard[] {
 export function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = secureRandomInt(i + 1);
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+function secureRandomInt(maxExclusive: number): number {
+  if (maxExclusive <= 0) return 0;
+  const maxUint32 = 0x1_0000_0000;
+  const limit = maxUint32 - (maxUint32 % maxExclusive);
+  const buf = new Uint32Array(1);
+
+  while (true) {
+    crypto.getRandomValues(buf);
+    const value = buf[0];
+    if (value < limit) {
+      return value % maxExclusive;
+    }
+  }
 }

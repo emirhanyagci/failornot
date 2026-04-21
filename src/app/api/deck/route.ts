@@ -41,8 +41,9 @@ export async function GET(request: Request) {
     auth: { persistSession: false },
   });
 
-  let categoriesQuery = sb.from("categories").select("id, slug").eq("is_active", true);
+  let categoriesQuery = sb.from("categories").select("id, slug");
   if (!useAll) {
+    categoriesQuery = categoriesQuery.eq("is_active", true);
     categoriesQuery = categoriesQuery.in("slug", requestedSlugs);
   }
   const { data: cats, error: categoriesError } = await categoriesQuery;
@@ -58,7 +59,7 @@ export async function GET(request: Request) {
     idToSlug.set(c.id, c.slug);
   }
   const ids = Array.from(idToSlug.keys());
-  if (ids.length === 0) {
+  if (!useAll && ids.length === 0) {
     return NextResponse.json(
       { cards: [], count: 0, slugs: useAll ? [] : requestedSlugs },
       {
@@ -70,12 +71,15 @@ export async function GET(request: Request) {
     );
   }
 
-  const { data: rows, error: wordsError } = await sb
+  let wordsQuery = sb
     .from("words")
     .select("id, word, forbidden_words, category_id")
     .eq("is_active", true)
-    .eq("language", "tr")
-    .in("category_id", ids);
+    .eq("language", "tr");
+  if (!useAll) {
+    wordsQuery = wordsQuery.in("category_id", ids);
+  }
+  const { data: rows, error: wordsError } = await wordsQuery;
   if (wordsError) {
     return NextResponse.json(
       { error: wordsError.message, cards: [], count: 0, slugs: useAll ? [] : requestedSlugs },
