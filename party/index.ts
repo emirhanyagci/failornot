@@ -610,11 +610,21 @@ export default class GameServer implements Party.Server {
         this.rotateDescriber(team);
       }
 
-      // Bomba aynı takımda kalır, kalan süre devam eder.
-      const remaining = Math.max(1, this.state.bombRemaining ?? BOMB_INITIAL);
+      // Sadece anlatıcıyı ve kelimeyi değiştir; mevcut bomba zamanlayıcısını
+      // KORU. `startTurn` burada çağrılırsa `runTimer` interval'ı her pasta
+      // sıfırlanır; ilk tik 1 sn sonra geldiği için art arda pas basıldığında
+      // saniyeler hiç tıklamaz ve süre "takılı" kalmış gibi görünür.
+      const describerId =
+        teammates[this.state.turnIndex[team] % (teammates.length || 1)];
+      const nextCard = this.drawCard();
+      turn.describerId = describerId;
+      turn.currentWord = nextCard;
       this.state.bombHolder = team;
-      this.state.bombRemaining = remaining;
-      this.startTurn(team, remaining);
+      if (!nextCard) {
+        this.sendStateAll();
+        return;
+      }
+      this.revealWordToTeam(team, nextCard);
       this.sendStateAll();
       return;
     }
