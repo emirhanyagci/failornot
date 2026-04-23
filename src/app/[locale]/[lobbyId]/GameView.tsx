@@ -86,6 +86,7 @@ export function GameView({ room }: GameViewProps) {
               onFoul={() => room.send({ type: "foul" })}
               passesRemaining={turn.remainingPasses}
               passLimit={game.settings.passLimit}
+              isBomb={isBomb}
             />
           ) : role === "opponent" ? (
             <div className="fixed sm:static bottom-0 left-0 right-0 px-4 py-3 sm:p-0 bg-card sm:bg-transparent border-t-2 sm:border-0 border-border z-20 sm:max-w-md sm:mx-auto sm:w-full" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>

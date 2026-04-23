@@ -124,6 +124,7 @@
     "opponentPrompt": "Watch for fouls",
     "correct": "Correct",
     "pass": "Pass",
+    "passBomb": "Pass Bomb",
     "foul": "Foul",
     "passRemaining": "Pass: {remaining}/{total}",
     "callFoul": "FOUL!",

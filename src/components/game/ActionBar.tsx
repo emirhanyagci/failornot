@@ -12,6 +12,7 @@ interface ActionBarProps {
   passLimit: number;
   disabled?: boolean;
   disablePass?: boolean;
+  isBomb?: boolean;
 }
 
 export function ActionBar({
@@ -22,6 +23,7 @@ export function ActionBar({
   passLimit,
   disabled,
   disablePass,
+  isBomb,
 }: ActionBarProps) {
   const t = useTranslations("game");
   return (
@@ -39,10 +41,10 @@ export function ActionBar({
         variant="warning"
         fullWidth
         onClick={onPass}
-        disabled={disabled || disablePass || passesRemaining <= 0}
+        disabled={disabled || disablePass || (!isBomb && passesRemaining <= 0)}
         icon={<SkipForward size={20} />}
       >
-        {t("pass")} ({passesRemaining}/{passLimit})
+        {isBomb ? t("passBomb") : `${t("pass")} (${passesRemaining}/${passLimit})`}
       </Button>
       <Button
         variant="danger"

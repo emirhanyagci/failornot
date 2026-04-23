@@ -595,6 +595,30 @@ export default class GameServer implements Party.Server {
     if (!this.assertDescriber(conn)) return;
     const turn = this.state.turn;
     if (!turn.currentWord) return;
+
+    if (this.state.mode === "bomb") {
+      // Bomba modunda "pas" = bombayı aynı takımdaki bir sonraki arkadaşına
+      // at. Rakibe geçmez, süre sıfırlanmaz (hot potato), pas limiti yok.
+      turn.roundResults.push({ type: "pass", word: turn.currentWord.word });
+      this.broadcast({ type: "round_event", payload: { type: "pass", word: turn.currentWord.word } });
+      // Pas geçilen kelime tekrar gelmesin diye havuzun sonuna atılır.
+      this.deck.push(turn.currentWord);
+
+      const team = turn.team;
+      const teammates = this.state.turnOrder[team];
+      if (teammates.length > 1) {
+        this.rotateDescriber(team);
+      }
+
+      // Bomba aynı takımda kalır, kalan süre devam eder.
+      const remaining = Math.max(1, this.state.bombRemaining ?? BOMB_INITIAL);
+      this.state.bombHolder = team;
+      this.state.bombRemaining = remaining;
+      this.startTurn(team, remaining);
+      this.sendStateAll();
+      return;
+    }
+
     if (turn.remainingPasses <= 0) return;
 
     turn.remainingPasses -= 1;

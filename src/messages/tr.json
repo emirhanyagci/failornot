@@ -124,6 +124,7 @@
     "opponentPrompt": "Faul gözle",
     "correct": "Doğru",
     "pass": "Pas",
+    "passBomb": "Bombayı Geç",
     "foul": "Faul",
     "passRemaining": "Pas: {remaining}/{total}",
     "callFoul": "FAUL!",
