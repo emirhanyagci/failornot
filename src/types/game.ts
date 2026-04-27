@@ -25,6 +25,8 @@ export interface LobbySettings {
   mode: GameMode;
   categorySlugs: string[];
   roundTime: number; // seconds
+  /** Bomba modunda her anlatıcının elindeki başlangıç süresi (saniye). */
+  bombTime: number;
   targetScore: number;
   passLimit: number;
   isPublic: boolean;

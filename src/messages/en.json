@@ -53,6 +53,7 @@
       "tarih": "History"
     },
     "roundTime": "Round Time",
+    "bombTime": "Bomb Time",
     "targetScore": "Target Score",
     "passLimit": "Pass Limit",
     "lobbyType": "Lobby Type",

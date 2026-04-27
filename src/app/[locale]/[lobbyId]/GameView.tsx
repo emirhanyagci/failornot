@@ -39,7 +39,7 @@ export function GameView({ room }: GameViewProps) {
   const isHost = meId === game.hostId;
   const isBomb = game.mode === "bomb";
 
-  const timerMax = isBomb ? 30 : game.settings.roundTime;
+  const timerMax = isBomb ? (game.settings.bombTime ?? 30) : game.settings.roundTime;
   const timerValue = isBomb ? (bomb?.remaining ?? game.bombRemaining ?? 0) : game.timer;
 
   return (

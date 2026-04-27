@@ -74,6 +74,7 @@ const DEFAULT_SETTINGS: LobbySettings = {
   mode: "normal",
   categorySlugs: ["genel"],
   roundTime: 60,
+  bombTime: 30,
   targetScore: 30,
   passLimit: 3,
   isPublic: false,
@@ -81,8 +82,11 @@ const DEFAULT_SETTINGS: LobbySettings = {
 };
 
 const RECONNECT_GRACE_MS = 30_000;
-const BOMB_INITIAL = 30;
+const BOMB_INITIAL_DEFAULT = 30;
 const SUDDEN_DEATH_INITIAL = 45;
+
+const BOMB_TIME_MIN = 10;
+const BOMB_TIME_MAX = 120;
 
 function normalizeWord(value: string): string {
   return value
@@ -371,9 +375,23 @@ export default class GameServer implements Party.Server {
   private handleUpdateSettings(conn: Party.Connection, patch: Partial<LobbySettings>) {
     if (!this.requireHost(conn)) return;
     if (this.state.phase !== "lobby") return;
-    this.state.settings = { ...this.state.settings, ...patch };
+    const merged: LobbySettings = { ...this.state.settings, ...patch };
+    if (typeof merged.bombTime !== "number" || !Number.isFinite(merged.bombTime)) {
+      merged.bombTime = BOMB_INITIAL_DEFAULT;
+    }
+    merged.bombTime = Math.min(
+      BOMB_TIME_MAX,
+      Math.max(BOMB_TIME_MIN, Math.round(merged.bombTime)),
+    );
+    this.state.settings = merged;
     this.state.mode = this.state.settings.mode;
     this.sendStateAll();
+  }
+
+  private bombInitial(): number {
+    const t = this.state.settings.bombTime;
+    if (typeof t !== "number" || !Number.isFinite(t)) return BOMB_INITIAL_DEFAULT;
+    return Math.min(BOMB_TIME_MAX, Math.max(BOMB_TIME_MIN, Math.round(t)));
   }
 
   private handleAssignTeam(
@@ -451,9 +469,10 @@ export default class GameServer implements Party.Server {
 
     if (mode === "bomb") {
       this.state.phase = "playing";
+      const initial = this.bombInitial();
       this.state.bombHolder = startingTeam;
-      this.state.bombRemaining = BOMB_INITIAL;
-      this.startTurn(startingTeam, BOMB_INITIAL);
+      this.state.bombRemaining = initial;
+      this.startTurn(startingTeam, initial);
     } else if (mode === "sudden_death") {
       this.state.phase = "playing";
       this.startTurn(startingTeam, SUDDEN_DEATH_INITIAL);
@@ -571,10 +590,11 @@ export default class GameServer implements Party.Server {
     if (this.state.mode === "bomb") {
       // Bomba modunda doğru anlatma puan KAZANDIRMAZ; sadece bomba rakibe geçer.
       const next: Team = turn.team === "A" ? "B" : "A";
+      const initial = this.bombInitial();
       this.state.bombHolder = next;
-      this.state.bombRemaining = BOMB_INITIAL;
+      this.state.bombRemaining = initial;
       this.rotateDescriber(turn.team);
-      this.startTurn(next, BOMB_INITIAL);
+      this.startTurn(next, initial);
       this.sendStateAll();
       return;
     }
@@ -658,14 +678,15 @@ export default class GameServer implements Party.Server {
 
     if (this.state.mode === "bomb") {
       // Bomba modunda faul: yapan takım -1 puan alır (negatife düşebilir).
-      // Bomba karşı takıma geçer, süre 30sn'ye resetlenir.
+      // Bomba karşı takıma geçer, süre ayarlanan başlangıç değerine resetlenir.
       stats.score -= 1;
       if (this.checkGameOver()) return;
       const next: Team = turn.team === "A" ? "B" : "A";
+      const initial = this.bombInitial();
       this.state.bombHolder = next;
-      this.state.bombRemaining = BOMB_INITIAL;
+      this.state.bombRemaining = initial;
       this.rotateDescriber(turn.team);
-      this.startTurn(next, BOMB_INITIAL);
+      this.startTurn(next, initial);
       this.sendStateAll();
       return;
     }
@@ -729,12 +750,13 @@ export default class GameServer implements Party.Server {
 
     if (this.checkGameOver()) return;
 
-    // Sıra rakibe geçer: bomba karşı takıma verilir, süre 30sn'ye resetlenir,
-    // patlayan takımda anlatıcı döner.
+    // Sıra rakibe geçer: bomba karşı takıma verilir, süre ayarlanan başlangıç
+    // değerine resetlenir, patlayan takımda anlatıcı döner.
+    const initial = this.bombInitial();
     this.state.bombHolder = opposer;
-    this.state.bombRemaining = BOMB_INITIAL;
+    this.state.bombRemaining = initial;
     this.rotateDescriber(holder);
-    this.startTurn(opposer, BOMB_INITIAL);
+    this.startTurn(opposer, initial);
     this.sendStateAll();
   }
 

@@ -21,6 +21,7 @@ export function CreateLobbyForm() {
   const [mode, setMode] = useState<GameMode>("normal");
   const [categorySlugs, setCategorySlugs] = useState<string[]>(["genel"]);
   const [roundTime, setRoundTime] = useState(60);
+  const [bombTime, setBombTime] = useState(30);
   const [targetScore, setTargetScore] = useState(30);
   const [passLimit, setPassLimit] = useState(3);
   const [isPublic, setIsPublic] = useState(false);
@@ -51,6 +52,7 @@ export function CreateLobbyForm() {
       mode,
       categorySlugs: effectiveCategorySlugs,
       roundTime,
+      bombTime,
       targetScore,
       passLimit,
       isPublic,
@@ -152,6 +154,28 @@ export function CreateLobbyForm() {
               step={10}
               value={roundTime}
               onChange={(e) => setRoundTime(Number(e.target.value))}
+              className="w-full accent-primary"
+            />
+          </Card.Content>
+        </Card>
+      )}
+
+      {mode === "bomb" && (
+        <Card className="w-full">
+          <Card.Content className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <SectionTitle>{t("bombTime")}</SectionTitle>
+              <span className="font-mono font-bold">
+                {bombTime} {tCommon("seconds")}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={10}
+              max={120}
+              step={5}
+              value={bombTime}
+              onChange={(e) => setBombTime(Number(e.target.value))}
               className="w-full accent-primary"
             />
           </Card.Content>

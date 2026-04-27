@@ -73,7 +73,9 @@ export function LobbyWaitingRoom({ room, lobbyId }: LobbyWaitingRoomProps) {
         <div className="text-sm text-center text-muted-foreground">
           {tCreate(`modes.${lobby.settings.mode}`)} •{" "}
           {lobby.settings.categorySlugs.map((s) => tCreate(`categories.${s}`)).join(", ")} •{" "}
-          {lobby.settings.roundTime}
+          {lobby.settings.mode === "bomb"
+            ? lobby.settings.bombTime
+            : lobby.settings.roundTime}
           {tCommon("seconds")}
         </div>
       </div>
